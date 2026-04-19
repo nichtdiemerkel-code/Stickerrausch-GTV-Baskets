@@ -2,13 +2,14 @@
 <html>
 <head>
   <title>Sticker Tausch Verein</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: Arial; padding: 20px; }
-    input, button { padding: 10px; margin: 5px; width: 100%; }
+    input, button { padding: 10px; margin: 5px 0; width: 100%; }
     .user { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
   </style>
 </head>
+
 <body>
 
 <h2>Sticker Tausch Verein</h2>
@@ -19,23 +20,25 @@
 <input id="suche" placeholder="Suche (z.B. 4,5,6)">
 
 <button onclick="speichern()">Speichern</button>
-  <button onclick="laden()">Meine Daten laden</button>
+<button onclick="laden()">Meine Daten laden</button>
 <button onclick="anzeigen()">Matches anzeigen</button>
 
 <div id="output"></div>
 
 <script>
-  function sortiereListe(liste) {
-  return [...new Set(liste.map(x => parseInt(x.trim()))
-    .filter(x => !isNaN(x)))]
-    .sort((a, b) => a - b);
+
+function sortiereListe(liste) {
+  return [...new Set(liste.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x)))].sort((a, b) => a - b);
 }
-const BIN_ID = "69e519ec856a6821894ef227";
-const API_KEY = "$2a$10$HdFJ0LYypk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
-  async function speichern() {
+
+const BIN_ID = "HIER_DEINE_BIN_ID_EINFÜGEN";
+const API_KEY = "HIER_DEINEN_MASTER_KEY_EINFÜGEN";
+
+async function speichern() {
   let name = document.getElementById("name").value;
-  let habe = sortiereListe(document.getElementById("habe").value.split(","));
-let suche = sortiereListe(document.getElementById("suche").value.split(","));
+  let password = document.getElementById("password").value;
+  let habe = sortiereListe(document.getElementById("habe").value);
+  let suche = sortiereListe(document.getElementById("suche").value);
 
   let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
     headers: { "X-Master-Key": API_KEY }
@@ -44,7 +47,13 @@ let suche = sortiereListe(document.getElementById("suche").value.split(","));
   let data = await res.json();
   let users = data.record.users;
 
-  users.push({ name, habe, suche });
+  let index = users.findIndex(u => u.name === name);
+
+  if (index !== -1) {
+    users[index] = { name, password, habe, suche };
+  } else {
+    users.push({ name, password, habe, suche });
+  }
 
   await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
     method: "PUT",
@@ -58,29 +67,7 @@ let suche = sortiereListe(document.getElementById("suche").value.split(","));
   alert("Gespeichert!");
 }
 
-async function anzeigen() {
-  let suche = document.getElementById("suche").value.split(",");
-
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
-
-  let data = await res.json();
-  let users = data.record.users;
-
-  let output = "";
-
-  users.forEach(user => {
-    suche.forEach(s => {
-      if (user.habe.includes(s.trim())) {
-        output += `<div class="user">${user.name} hat deine ${s}</div>`;
-      }
-    });
-  });
-
-  document.getElementById("output").innerHTML = output;
-}
-  async function laden() {
+async function laden() {
   let name = document.getElementById("name").value;
   let password = document.getElementById("password").value;
 
@@ -106,6 +93,30 @@ async function anzeigen() {
   document.getElementById("habe").value = user.habe.join(",");
   document.getElementById("suche").value = user.suche.join(",");
 }
+
+async function anzeigen() {
+  let suche = sortiereListe(document.getElementById("suche").value);
+
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
+
+  let data = await res.json();
+  let users = data.record.users;
+
+  let output = "";
+
+  users.forEach(user => {
+    suche.forEach(s => {
+      if (user.habe.includes(s)) {
+        output += `<div class="user">${user.name} hat deine Nummer ${s}</div>`;
+      }
+    });
+  });
+
+  document.getElementById("output").innerHTML = output;
+}
+
 </script>
 
 </body>
