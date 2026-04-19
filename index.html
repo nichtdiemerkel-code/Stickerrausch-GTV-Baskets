@@ -3,139 +3,91 @@
 <head>
   <title>Sticker Tausch Verein</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    input, button { padding: 10px; margin: 5px 0; width: 100%; }
-    .user { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-  </style>
 </head>
 
 <body>
 
 <h2>Sticker Tausch Verein</h2>
 
-<input id="name" placeholder="Dein Name">
-<input id="password" placeholder="Passwort">
-<input id="habe" placeholder="Habe (z.B. 1,2,3)">
-<input id="suche" placeholder="Suche (z.B. 4,5,6)">
+<input id="name" placeholder="Name"><br><br>
+<input id="password" placeholder="Passwort"><br><br>
+<input id="habe" placeholder="Habe (1,2,3)"><br><br>
+<input id="suche" placeholder="Suche (4,5,6)"><br><br>
 
 <button onclick="speichern()">Speichern</button>
 <button onclick="laden()">Meine Daten laden</button>
-<button onclick="anzeigen()">Matches anzeigen</button>
 
-<div id="output"></div>
+<p id="output"></p>
 
 <script>
 
+const BIN_ID = "69e519ec856a6821894ef227";
+const API_KEY = "DEIN_X_MASTER_KEY_HIER";
+
 function sortiereListe(text) {
   return [...new Set(
-    text.split(",")
-    .map(x => parseInt(x.trim()))
-    .filter(x => !isNaN(x))
-  )].sort((a, b) => a - b);
+    text.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x))
+  )].sort((a,b)=>a-b);
 }
-
-const BIN_ID = "69e519ec856a6821894ef227";
-const API_KEY = "$2a$10$HdFJ0LYypk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
 
 async function speichern() {
-  try {
-    let name = document.getElementById("name").value;
-    let password = document.getElementById("password").value;
-    let habe = sortiereListe(document.getElementById("habe").value);
-    let suche = sortiereListe(document.getElementById("suche").value);
+  let name = document.getElementById("name").value;
+  let password = document.getElementById("password").value;
+  let habe = sortiereListe(document.getElementById("habe").value);
+  let suche = sortiereListe(document.getElementById("suche").value);
 
-    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: { "X-Master-Key": API_KEY }
-    });
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
 
-    let data = await res.json();
-    let users = data.record.users || [];
+  let data = await res.json();
+  let users = data.record.users || [];
 
-    let index = users.findIndex(u => u.name === name);
+  let index = users.findIndex(u => u.name === name);
 
-    if (index !== -1) {
-      users[index] = { name, password, habe, suche };
-    } else {
-      users.push({ name, password, habe, suche });
-    }
-
-    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Master-Key": API_KEY
-      },
-      body: JSON.stringify({ users })
-    });
-
-    alert("Gespeichert!");
-  } catch (err) {
-    alert("Fehler beim Speichern!");
-    console.error(err);
+  if(index !== -1){
+    users[index] = {name, password, habe, suche};
+  } else {
+    users.push({name, password, habe, suche});
   }
+
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Master-Key": API_KEY
+    },
+    body: JSON.stringify({users})
+  });
+
+  alert("Gespeichert!");
 }
 
-async function laden() {
-  try {
-    let name = document.getElementById("name").value;
-    let password = document.getElementById("password").value;
+async function laden(){
+  let name = document.getElementById("name").value;
+  let password = document.getElementById("password").value;
 
-    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: { "X-Master-Key": API_KEY }
-    });
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
 
-    let data = await res.json();
-    let users = data.record.users || [];
+  let data = await res.json();
+  let users = data.record.users || [];
 
-    let user = users.find(u => u.name === name);
+  let user = users.find(u => u.name === name);
 
-    if (!user) {
-      alert("Name nicht gefunden!");
-      return;
-    }
-
-    if (user.password !== password) {
-      alert("Falsches Passwort!");
-      return;
-    }
-
-    document.getElementById("habe").value = user.habe.join(",");
-    document.getElementById("suche").value = user.suche.join(",");
-
-  } catch (err) {
-    alert("Fehler beim Laden!");
-    console.error(err);
+  if(!user){
+    alert("Nicht gefunden");
+    return;
   }
-}
 
-async function anzeigen() {
-  try {
-    let suche = sortiereListe(document.getElementById("suche").value);
-
-    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: { "X-Master-Key": API_KEY }
-    });
-
-    let data = await res.json();
-    let users = data.record.users || [];
-
-    let output = "";
-
-    users.forEach(user => {
-      suche.forEach(s => {
-        if (user.habe.includes(s)) {
-          output += `<div class="user">${user.name} hat deine Nummer ${s}</div>`;
-        }
-      });
-    });
-
-    document.getElementById("output").innerHTML = output;
-
-  } catch (err) {
-    alert("Fehler bei Anzeige!");
-    console.error(err);
+  if(user.password !== password){
+    alert("Falsches Passwort");
+    return;
   }
+
+  document.getElementById("habe").value = user.habe.join(",");
+  document.getElementById("suche").value = user.suche.join(",");
 }
 
 </script>
