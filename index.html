@@ -42,15 +42,17 @@ button {
 <input id="habe" placeholder="Ich habe (z.B. 1,2,3)">
 <input id="suche" placeholder="Ich suche (z.B. 4,5,6)">
 
-<button onclick="speichern()">Eintragen</button>
+<button onclick="speichern()">Eintragen / Aktualisieren</button>
 <button onclick="anzeigen()">Matches anzeigen</button>
 
 <div id="output"></div>
 
 <script>
 
-let alle = JSON.parse(localStorage.getItem("stickerListe")) || [];
+const BIN_ID = "69e539d3aaba882197179c9e";
+const API_KEY = "$2a$10$HdFJ0LYvpk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
 
+// Liste verarbeiten
 function liste(text) {
   return text.split(",")
     .map(x => parseInt(x.trim()))
@@ -58,8 +60,19 @@ function liste(text) {
     .sort((a,b)=>a-b);
 }
 
-function speichern() {
-  let name = document.getElementById("name").value;
+// Daten laden
+async function ladeAlle() {
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
+
+  let data = await res.json();
+  return data.record.users || [];
+}
+
+// Speichern (überschreibt eigenen Eintrag)
+async function speichern() {
+  let name = document.getElementById("name").value.trim();
   let habe = liste(document.getElementById("habe").value);
   let suche = liste(document.getElementById("suche").value);
 
@@ -68,36 +81,49 @@ function speichern() {
     return;
   }
 
-  let idx = alle.findIndex(p => p.name === name);
+  let users = await ladeAlle();
+
+  let idx = users.findIndex(u => u.name === name);
 
   if (idx !== -1) {
-    alle[idx] = { name, habe, suche };
+    users[idx] = { name, habe, suche };
   } else {
-    alle.push({ name, habe, suche });
+    users.push({ name, habe, suche });
   }
 
-  localStorage.setItem("stickerListe", JSON.stringify(alle));
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Master-Key": API_KEY
+    },
+    body: JSON.stringify({ users })
+  });
 
   alert("Gespeichert!");
 }
 
-function anzeigen() {
-  let meinName = document.getElementById("name").value;
+// Matches anzeigen
+async function anzeigen() {
+  let meinName = document.getElementById("name").value.trim();
   let meineSuche = liste(document.getElementById("suche").value);
+
+  let users = await ladeAlle();
 
   let html = "";
 
-  alle.forEach(p => {
-    if (p.name === meinName) return;
+  users.forEach(u => {
+    if (u.name === meinName) return;
 
-    let matches = meineSuche.filter(n => p.habe.includes(n));
+    let treffer = meineSuche.filter(n => u.habe.includes(n));
 
-    if (matches.length > 0) {
-      html += `<div class="match"><b>${p.name}</b> hat: ${matches.join(", ")}</div>`;
+    if (treffer.length > 0) {
+      html += `<div class="match"><b>${u.name}</b> hat: ${treffer.join(", ")}</div>`;
     }
   });
 
-  document.getElementById("output").innerHTML = html || "Keine Matches gefunden";
+  document.getElementById("output").innerHTML =
+    html || "Keine Matches gefunden";
 }
 
 </script>
