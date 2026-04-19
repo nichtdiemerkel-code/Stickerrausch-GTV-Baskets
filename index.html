@@ -39,6 +39,7 @@ input, button {
 const BIN_ID = "69e539d3aaba882197179c9e";
 const API_KEY = "$2a$10$HdFJ0LYvpk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
 
+// SORTIERFUNKTION
 function sortiereListe(text) {
   return [...new Set(
     text.split(",")
@@ -47,6 +48,7 @@ function sortiereListe(text) {
   )].sort((a, b) => a - b);
 }
 
+// SPEICHERN
 async function speichern() {
   let name = document.getElementById("name").value;
   let password = document.getElementById("password").value;
@@ -86,6 +88,7 @@ async function speichern() {
   alert("Gespeichert!");
 }
 
+// LADEN (JETZT MIT SORTIERUNG!)
 async function laden() {
   let name = document.getElementById("name").value;
   let password = document.getElementById("password").value;
@@ -109,10 +112,12 @@ async function laden() {
     return;
   }
 
-  document.getElementById("habe").value = user.habe.join(", ");
-  document.getElementById("suche").value = user.suche.join(", ");
+  // 👉 HIER IST DER FIX
+  document.getElementById("habe").value = sortiereListe(user.habe.join(",")).join(", ");
+  document.getElementById("suche").value = sortiereListe(user.suche.join(",")).join(", ");
 }
 
+// MATCHES
 async function anzeigen() {
   let name = document.getElementById("name").value;
   let suche = sortiereListe(document.getElementById("suche").value);
