@@ -19,6 +19,7 @@
 <input id="suche" placeholder="Suche (z.B. 4,5,6)">
 
 <button onclick="speichern()">Speichern</button>
+  <button onclick="laden()">Meine Daten laden</button>
 <button onclick="anzeigen()">Matches anzeigen</button>
 
 <div id="output"></div>
@@ -78,6 +79,32 @@ async function anzeigen() {
   });
 
   document.getElementById("output").innerHTML = output;
+}
+  async function laden() {
+  let name = document.getElementById("name").value;
+  let password = document.getElementById("password").value;
+
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
+
+  let data = await res.json();
+  let users = data.record.users;
+
+  let user = users.find(u => u.name === name);
+
+  if (!user) {
+    alert("Name nicht gefunden!");
+    return;
+  }
+
+  if (user.password !== password) {
+    alert("Falsches Passwort!");
+    return;
+  }
+
+  document.getElementById("habe").value = user.habe.join(",");
+  document.getElementById("suche").value = user.suche.join(",");
 }
 </script>
 
