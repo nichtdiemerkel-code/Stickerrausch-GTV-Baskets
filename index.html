@@ -5,33 +5,10 @@
 <title>Sticker Tauschbörse</title>
 
 <style>
-body {
-  font-family: Arial;
-  padding: 20px;
-  max-width: 500px;
-  margin: auto;
-}
-
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  font-size: 16px;
-}
-
-button {
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-}
-
-.match {
-  background: #e9f5ff;
-  padding: 8px;
-  margin: 6px 0;
-  border-radius: 5px;
-}
+body { font-family: Arial; padding: 20px; max-width: 500px; margin: auto; }
+input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; }
+button { background: #007bff; color: white; border: none; border-radius: 5px; }
+.match { background: #e9f5ff; padding: 8px; margin: 6px 0; border-radius: 5px; }
 </style>
 </head>
 <body>
@@ -42,7 +19,7 @@ button {
 <input id="habe" placeholder="Ich habe (z.B. 1,2,3)">
 <input id="suche" placeholder="Ich suche (z.B. 4,5,6)">
 
-<button onclick="speichern()">Eintragen / Aktualisieren</button>
+<button onclick="speichern()">Eintragen</button>
 <button onclick="anzeigen()">Matches anzeigen</button>
 
 <div id="output"></div>
@@ -52,15 +29,12 @@ button {
 const BIN_ID = "69e539d3aaba882197179c9e";
 const API_KEY = "$2a$10$HdFJ0LYvpk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
 
-// Liste verarbeiten
 function liste(text) {
   return text.split(",")
     .map(x => parseInt(x.trim()))
-    .filter(x => !isNaN(x))
-    .sort((a,b)=>a-b);
+    .filter(x => !isNaN(x));
 }
 
-// Daten laden
 async function ladeAlle() {
   let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
     headers: { "X-Master-Key": API_KEY }
@@ -70,16 +44,10 @@ async function ladeAlle() {
   return data.record.users || [];
 }
 
-// Speichern (überschreibt eigenen Eintrag)
 async function speichern() {
   let name = document.getElementById("name").value.trim();
   let habe = liste(document.getElementById("habe").value);
   let suche = liste(document.getElementById("suche").value);
-
-  if (!name) {
-    alert("Bitte Namen eingeben");
-    return;
-  }
 
   let users = await ladeAlle();
 
@@ -103,7 +71,6 @@ async function speichern() {
   alert("Gespeichert!");
 }
 
-// Matches anzeigen
 async function anzeigen() {
   let meinName = document.getElementById("name").value.trim();
   let meineSuche = liste(document.getElementById("suche").value);
