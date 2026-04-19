@@ -2,10 +2,11 @@
 <html>
 <head>
   <title>Sticker Tausch Verein</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: Arial; padding: 20px; }
     input, button { padding: 10px; margin: 5px; width: 100%; }
+    .user { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -16,18 +17,61 @@
 <input id="habe" placeholder="Habe (z.B. 1,2,3)">
 <input id="suche" placeholder="Suche (z.B. 4,5,6)">
 
-<button onclick="anzeigen()">Eingaben anzeigen</button>
+<button onclick="speichern()">Speichern</button>
+<button onclick="anzeigen()">Matches anzeigen</button>
 
 <div id="output"></div>
 
 <script>
-function anzeigen() {
+const BIN_ID = "69e519ec856a6821894ef227";
+const API_KEY = "$2a$10$HdFJ0LYypk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
+  async function speichern() {
   let name = document.getElementById("name").value;
-  let habe = document.getElementById("habe").value;
-  let suche = document.getElementById("suche").value;
+  let habe = document.getElementById("habe").value.split(",");
+  let suche = document.getElementById("suche").value.split(",");
 
-  document.getElementById("output").innerHTML =
-    "<b>" + name + "</b><br>Habe: " + habe + "<br>Suche: " + suche;
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
+
+  let data = await res.json();
+  let users = data.record.users;
+
+  users.push({ name, habe, suche });
+
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Master-Key": API_KEY
+    },
+    body: JSON.stringify({ users })
+  });
+
+  alert("Gespeichert!");
+}
+
+async function anzeigen() {
+  let suche = document.getElementById("suche").value.split(",");
+
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
+
+  let data = await res.json();
+  let users = data.record.users;
+
+  let output = "";
+
+  users.forEach(user => {
+    suche.forEach(s => {
+      if (user.habe.includes(s.trim())) {
+        output += `<div class="user">${user.name} hat deine ${s}</div>`;
+      }
+    });
+  });
+
+  document.getElementById("output").innerHTML = output;
 }
 </script>
 
