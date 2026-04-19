@@ -33,8 +33,8 @@ const BIN_ID = "69e519ec856a6821894ef227";
 const API_KEY = "$2a$10$HdFJ0LYypk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
   async function speichern() {
   let name = document.getElementById("name").value;
-  let habe = document.getElementById("habe").value.split(",");
-  let suche = document.getElementById("suche").value.split(",");
+  let habe = sortiereListe(document.getElementById("habe").value.split(","));
+let suche = sortiereListe(document.getElementById("suche").value.split(","));
 
   let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
     headers: { "X-Master-Key": API_KEY }
