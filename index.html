@@ -1,35 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-  <title>Sticker Tausch Verein</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
+<meta charset="UTF-8">
+<title>Sticker Tausch Verein</title>
 
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 16px;
+}
+</style>
+
+</head>
 <body>
 
-<h2>Sticker Tausch Verein</h2>
+<h1>Sticker Tausch Verein</h1>
 
-<input id="name" placeholder="Name"><br><br>
-<input id="password" placeholder="Passwort"><br><br>
-<input id="habe" placeholder="Habe (1,2,3)"><br><br>
-<input id="suche" placeholder="Suche (4,5,6)"><br><br>
+<input id="name" placeholder="Dein Name">
+<input id="password" type="password" placeholder="Passwort">
+<input id="habe" placeholder="Habe (z.B. 1,2,3)">
+<input id="suche" placeholder="Suche (z.B. 4,5,6)">
 
 <button onclick="speichern()">Speichern</button>
 <button onclick="laden()">Meine Daten laden</button>
+<button onclick="anzeigen()">Matches anzeigen</button>
 
-<p id="output"></p>
+<div id="output"></div>
 
 <script>
 
-const BIN_ID = "69e519ec856a6821894ef227";
-const API_KEY = "DEIN_X_MASTER_KEY_HIER";
+// 👉 HIER DEINE DATEN EINTRAGEN
+const BIN_ID = "69e539d3aaba882197179c9e";
+const API_KEY = "HIER_DEIN_X_MASTER_KEY";
 
+// Zahlen sortieren
 function sortiereListe(text) {
   return [...new Set(
-    text.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x))
-  )].sort((a,b)=>a-b);
+    text.split(",")
+    .map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x))
+  )].sort((a, b) => a - b);
 }
 
+// SPEICHERN
 async function speichern() {
   let name = document.getElementById("name").value;
   let password = document.getElementById("password").value;
@@ -43,12 +63,18 @@ async function speichern() {
   let data = await res.json();
   let users = data.record.users || [];
 
-  let index = users.findIndex(u => u.name === name);
+  let existing = users.find(u => u.name === name);
 
-  if(index !== -1){
-    users[index] = {name, password, habe, suche};
+  if (existing) {
+    if (existing.password !== password) {
+      alert("Falsches Passwort!");
+      return;
+    }
+
+    existing.habe = habe;
+    existing.suche = suche;
   } else {
-    users.push({name, password, habe, suche});
+    users.push({ name, password, habe, suche });
   }
 
   await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
@@ -57,13 +83,14 @@ async function speichern() {
       "Content-Type": "application/json",
       "X-Master-Key": API_KEY
     },
-    body: JSON.stringify({users})
+    body: JSON.stringify({ users })
   });
 
   alert("Gespeichert!");
 }
 
-async function laden(){
+// LADEN (eigene Daten anzeigen)
+async function laden() {
   let name = document.getElementById("name").value;
   let password = document.getElementById("password").value;
 
@@ -76,18 +103,42 @@ async function laden(){
 
   let user = users.find(u => u.name === name);
 
-  if(!user){
-    alert("Nicht gefunden");
+  if (!user) {
+    alert("Kein Benutzer gefunden");
     return;
   }
 
-  if(user.password !== password){
-    alert("Falsches Passwort");
+  if (user.password !== password) {
+    alert("Falsches Passwort!");
     return;
   }
 
-  document.getElementById("habe").value = user.habe.join(",");
-  document.getElementById("suche").value = user.suche.join(",");
+  document.getElementById("habe").value = user.habe.join(", ");
+  document.getElementById("suche").value = user.suche.join(", ");
+}
+
+// MATCHES
+async function anzeigen() {
+  let suche = sortiereListe(document.getElementById("suche").value);
+
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
+  });
+
+  let data = await res.json();
+  let users = data.record.users || [];
+
+  let output = "";
+
+  users.forEach(user => {
+    suche.forEach(s => {
+      if (user.habe.includes(s)) {
+        output += `<div>${user.name} hat deine Nummer ${s}</div>`;
+      }
+    });
+  });
+
+  document.getElementById("output").innerHTML = output;
 }
 
 </script>
