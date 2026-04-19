@@ -27,94 +27,115 @@
 
 <script>
 
-function sortiereListe(liste) {
-  return [...new Set(liste.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x)))].sort((a, b) => a - b);
+function sortiereListe(text) {
+  return [...new Set(
+    text.split(",")
+    .map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x))
+  )].sort((a, b) => a - b);
 }
 
-const BIN_ID = "HIER_DEINE_BIN_ID_EINFÜGEN";
-const API_KEY = "HIER_DEINEN_MASTER_KEY_EINFÜGEN";
+const BIN_ID = "DEINE_BIN_ID_HIER";
+const API_KEY = "DEIN_MASTER_KEY_HIER";
 
 async function speichern() {
-  let name = document.getElementById("name").value;
-  let password = document.getElementById("password").value;
-  let habe = sortiereListe(document.getElementById("habe").value);
-  let suche = sortiereListe(document.getElementById("suche").value);
+  try {
+    let name = document.getElementById("name").value;
+    let password = document.getElementById("password").value;
+    let habe = sortiereListe(document.getElementById("habe").value);
+    let suche = sortiereListe(document.getElementById("suche").value);
 
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
+    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { "X-Master-Key": API_KEY }
+    });
 
-  let data = await res.json();
-  let users = data.record.users;
+    let data = await res.json();
+    let users = data.record.users || [];
 
-  let index = users.findIndex(u => u.name === name);
+    let index = users.findIndex(u => u.name === name);
 
-  if (index !== -1) {
-    users[index] = { name, password, habe, suche };
-  } else {
-    users.push({ name, password, habe, suche });
+    if (index !== -1) {
+      users[index] = { name, password, habe, suche };
+    } else {
+      users.push({ name, password, habe, suche });
+    }
+
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": API_KEY
+      },
+      body: JSON.stringify({ users })
+    });
+
+    alert("Gespeichert!");
+  } catch (err) {
+    alert("Fehler beim Speichern!");
+    console.error(err);
   }
-
-  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Master-Key": API_KEY
-    },
-    body: JSON.stringify({ users })
-  });
-
-  alert("Gespeichert!");
 }
 
 async function laden() {
-  let name = document.getElementById("name").value;
-  let password = document.getElementById("password").value;
+  try {
+    let name = document.getElementById("name").value;
+    let password = document.getElementById("password").value;
 
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
+    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { "X-Master-Key": API_KEY }
+    });
 
-  let data = await res.json();
-  let users = data.record.users;
+    let data = await res.json();
+    let users = data.record.users || [];
 
-  let user = users.find(u => u.name === name);
+    let user = users.find(u => u.name === name);
 
-  if (!user) {
-    alert("Name nicht gefunden!");
-    return;
+    if (!user) {
+      alert("Name nicht gefunden!");
+      return;
+    }
+
+    if (user.password !== password) {
+      alert("Falsches Passwort!");
+      return;
+    }
+
+    document.getElementById("habe").value = user.habe.join(",");
+    document.getElementById("suche").value = user.suche.join(",");
+
+  } catch (err) {
+    alert("Fehler beim Laden!");
+    console.error(err);
   }
-
-  if (user.password !== password) {
-    alert("Falsches Passwort!");
-    return;
-  }
-
-  document.getElementById("habe").value = user.habe.join(",");
-  document.getElementById("suche").value = user.suche.join(",");
 }
 
 async function anzeigen() {
-  let suche = sortiereListe(document.getElementById("suche").value);
+  try {
+    let suche = sortiereListe(document.getElementById("suche").value);
 
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
-
-  let data = await res.json();
-  let users = data.record.users;
-
-  let output = "";
-
-  users.forEach(user => {
-    suche.forEach(s => {
-      if (user.habe.includes(s)) {
-        output += `<div class="user">${user.name} hat deine Nummer ${s}</div>`;
-      }
+    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { "X-Master-Key": API_KEY }
     });
-  });
 
-  document.getElementById("output").innerHTML = output;
+    let data = await res.json();
+    let users = data.record.users || [];
+
+    let output = "";
+
+    users.forEach(user => {
+      suche.forEach(s => {
+        if (user.habe.includes(s)) {
+          output += `<div class="user">${user.name} hat deine Nummer ${s}</div>`;
+        }
+      });
+    });
+
+    document.getElementById("output").innerHTML = output;
+
+  } catch (err) {
+    alert("Fehler bei Anzeige!");
+    console.error(err);
+  }
 }
 
 </script>
