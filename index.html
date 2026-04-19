@@ -23,6 +23,11 @@
 <div id="output"></div>
 
 <script>
+  function sortiereListe(liste) {
+  return [...new Set(liste.map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x)))]
+    .sort((a, b) => a - b);
+}
 const BIN_ID = "69e519ec856a6821894ef227";
 const API_KEY = "$2a$10$HdFJ0LYypk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
   async function speichern() {
