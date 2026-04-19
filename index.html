@@ -2,127 +2,102 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Sticker Tausch Verein</title>
+<title>Sticker Tauschbörse</title>
 
 <style>
-body { font-family: Arial; padding: 20px; }
-input, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
-</style>
+body {
+  font-family: Arial;
+  padding: 20px;
+  max-width: 500px;
+  margin: auto;
+}
 
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.match {
+  background: #e9f5ff;
+  padding: 8px;
+  margin: 6px 0;
+  border-radius: 5px;
+}
+</style>
 </head>
 <body>
 
-<h1>Sticker Tausch Verein</h1>
+<h2>Sticker Tauschbörse</h2>
 
 <input id="name" placeholder="Dein Name">
-<input id="password" type="password" placeholder="Passwort">
-<input id="habe" placeholder="Habe (z.B. 1,2,3)">
-<input id="suche" placeholder="Suche (z.B. 4,5,6)">
+<input id="habe" placeholder="Ich habe (z.B. 1,2,3)">
+<input id="suche" placeholder="Ich suche (z.B. 4,5,6)">
 
-<button onclick="speichern()">Speichern</button>
-<button onclick="laden()">Meine Daten laden</button>
+<button onclick="speichern()">Eintragen</button>
 <button onclick="anzeigen()">Matches anzeigen</button>
 
 <div id="output"></div>
 
 <script>
 
-const BIN_ID = "69e539d3aaba882197179c9e";
-const API_KEY = "$2a$10$HdFJ0LYvpk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
+let alle = JSON.parse(localStorage.getItem("stickerListe")) || [];
 
-function parseListe(text) {
+function liste(text) {
   return text.split(",")
     .map(x => parseInt(x.trim()))
     .filter(x => !isNaN(x))
     .sort((a,b)=>a-b);
 }
 
-async function speichern() {
+function speichern() {
   let name = document.getElementById("name").value;
-  let password = document.getElementById("password").value;
-  let habe = parseListe(document.getElementById("habe").value);
-  let suche = parseListe(document.getElementById("suche").value);
+  let habe = liste(document.getElementById("habe").value);
+  let suche = liste(document.getElementById("suche").value);
 
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
-
-  let data = await res.json();
-  let users = data.record.users || [];
-
-  let existing = users.find(u => u.name === name);
-
-  if (existing) {
-    if (existing.password !== password) {
-      alert("Falsches Passwort!");
-      return;
-    }
-    existing.habe = habe;
-    existing.suche = suche;
-  } else {
-    users.push({ name, password, habe, suche });
+  if (!name) {
+    alert("Bitte Namen eingeben");
+    return;
   }
 
-  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Master-Key": API_KEY
-    },
-    body: JSON.stringify({ users })
-  });
+  let idx = alle.findIndex(p => p.name === name);
+
+  if (idx !== -1) {
+    alle[idx] = { name, habe, suche };
+  } else {
+    alle.push({ name, habe, suche });
+  }
+
+  localStorage.setItem("stickerListe", JSON.stringify(alle));
 
   alert("Gespeichert!");
 }
 
-async function laden() {
-  let name = document.getElementById("name").value;
-  let password = document.getElementById("password").value;
+function anzeigen() {
+  let meinName = document.getElementById("name").value;
+  let meineSuche = liste(document.getElementById("suche").value);
 
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
+  let html = "";
+
+  alle.forEach(p => {
+    if (p.name === meinName) return;
+
+    let matches = meineSuche.filter(n => p.habe.includes(n));
+
+    if (matches.length > 0) {
+      html += `<div class="match"><b>${p.name}</b> hat: ${matches.join(", ")}</div>`;
+    }
   });
 
-  let data = await res.json();
-  let users = data.record.users || [];
-
-  let user = users.find(u => u.name === name);
-
-  if (!user) {
-    alert("Kein Benutzer gefunden");
-    return;
-  }
-
-  if (user.password !== password) {
-    alert("Falsches Passwort!");
-    return;
-  }
-
-  document.getElementById("habe").value = user.habe.sort((a,b)=>a-b).join(", ");
-  document.getElementById("suche").value = user.suche.sort((a,b)=>a-b).join(", ");
-}
-
-async function anzeigen() {
-  let suche = parseListe(document.getElementById("suche").value);
-
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
-
-  let data = await res.json();
-  let users = data.record.users || [];
-
-  let output = "";
-
-  users.forEach(user => {
-    suche.forEach(s => {
-      if (user.habe.includes(s)) {
-        output += `<div>${user.name} hat deine Nummer ${s}</div>`;
-      }
-    });
-  });
-
-  document.getElementById("output").innerHTML = output || "Keine Matches";
+  document.getElementById("output").innerHTML = html || "Keine Matches gefunden";
 }
 
 </script>
