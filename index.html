@@ -30,22 +30,18 @@ input, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
 const BIN_ID = "69e539d3aaba882197179c9e";
 const API_KEY = "$2a$10$HdFJ0LYvpk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
 
-// 🔥 SORTIEREN (egal ob String oder Array)
-function sortiereArray(arr) {
-  return arr.map(Number).filter(n => !isNaN(n)).sort((a,b)=>a-b);
+function parseListe(text) {
+  return text.split(",")
+    .map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x))
+    .sort((a,b)=>a-b);
 }
 
-function textZuArray(text) {
-  return text.split(",").map(x => x.trim()).filter(x => x !== "");
-}
-
-// SPEICHERN
 async function speichern() {
   let name = document.getElementById("name").value;
   let password = document.getElementById("password").value;
-
-  let habe = sortiereArray(textZuArray(document.getElementById("habe").value));
-  let suche = sortiereArray(textZuArray(document.getElementById("suche").value));
+  let habe = parseListe(document.getElementById("habe").value);
+  let suche = parseListe(document.getElementById("suche").value);
 
   let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
     headers: { "X-Master-Key": API_KEY }
@@ -61,10 +57,8 @@ async function speichern() {
       alert("Falsches Passwort!");
       return;
     }
-
-    existing.habe = sortiereArray(existing.habe);
-    existing.suche = sortiereArray(existing.suche);
-
+    existing.habe = habe;
+    existing.suche = suche;
   } else {
     users.push({ name, password, habe, suche });
   }
@@ -81,7 +75,6 @@ async function speichern() {
   alert("Gespeichert!");
 }
 
-// LADEN (JETZT IMMER SORTIERT!)
 async function laden() {
   let name = document.getElementById("name").value;
   let password = document.getElementById("password").value;
@@ -105,17 +98,12 @@ async function laden() {
     return;
   }
 
-  let habeSortiert = sortiereArray(user.habe);
-  let sucheSortiert = sortiereArray(user.suche);
-
-  document.getElementById("habe").value = habeSortiert.join(", ");
-  document.getElementById("suche").value = sucheSortiert.join(", ");
+  document.getElementById("habe").value = user.habe.sort((a,b)=>a-b).join(", ");
+  document.getElementById("suche").value = user.suche.sort((a,b)=>a-b).join(", ");
 }
 
-// MATCHES
 async function anzeigen() {
-  let name = document.getElementById("name").value;
-  let suche = sortiereArray(textZuArray(document.getElementById("suche").value));
+  let suche = parseListe(document.getElementById("suche").value);
 
   let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
     headers: { "X-Master-Key": API_KEY }
@@ -127,20 +115,14 @@ async function anzeigen() {
   let output = "";
 
   users.forEach(user => {
-    if (user.name !== name) {
-      let gemeinsame = sortiereArray(user.habe).filter(n => suche.includes(n));
-
-      if (gemeinsame.length > 0) {
-        output += `<div>${user.name} hat: ${gemeinsame.join(", ")}</div>`;
+    suche.forEach(s => {
+      if (user.habe.includes(s)) {
+        output += `<div>${user.name} hat deine Nummer ${s}</div>`;
       }
-    }
+    });
   });
 
-  if (output === "") {
-    output = "Keine Matches gefunden";
-  }
-
-  document.getElementById("output").innerHTML = output;
+  document.getElementById("output").innerHTML = output || "Keine Matches";
 }
 
 </script>
