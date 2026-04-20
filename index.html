@@ -34,6 +34,29 @@
     alert("Gespeichert!");
   };
 
+  // 🔥 NEU: eigene Daten laden
+  window.meineDatenLaden = async function () {
+    const name = document.getElementById("name").value;
+
+    const querySnapshot = await getDocs(collection(db, "tausche"));
+
+    let gefunden = false;
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+
+      if (data.name === name) {
+        document.getElementById("habe").value = data.habe;
+        document.getElementById("suche").value = data.suche;
+        gefunden = true;
+      }
+    });
+
+    if (!gefunden) {
+      alert("Keine Daten gefunden");
+    }
+  };
+
   window.matchesAnzeigen = async function () {
     const querySnapshot = await getDocs(collection(db, "tausche"));
     let daten = [];
@@ -89,15 +112,13 @@ input, button {
   margin: 5px 0;
 }
 
-/* 🔴 Logo oben (klein lassen) */
 .logo {
   width: 80px;
   margin: 10px auto;
 }
 
-/* 🔴 Stickerbild unten (größer!) */
 .stickerbild {
-  width: 250px;   /* HIER größer gemacht */
+  width: 180px;
   max-width: 100%;
   margin-top: 30px;
 }
@@ -107,7 +128,6 @@ input, button {
 
 <body>
 
-<!-- 🔥 GTV LOGO OBEN -->
 <img src="images (1).png" class="logo">
 
 <h2>Sticker Tauschbörse</h2>
@@ -118,11 +138,14 @@ input, button {
 <input id="suche" placeholder="Suche (z.B. 5,8,10)">
 
 <button onclick="speichern()">Speichern</button>
+
+<!-- 🔥 WIEDER DA -->
+<button onclick="meineDatenLaden()">Meine Daten laden</button>
+
 <button onclick="matchesAnzeigen()">Matches anzeigen</button>
 
 <div id="matches"></div>
 
-<!-- 🔥 STICKERBILD UNTEN (JETZT GRÖSSER) -->
 <img src="PXL_20260420_065327386.jpg" class="stickerbild">
 
 </body>
