@@ -8,7 +8,6 @@
 body {
   font-family: Arial;
   background: #f4f6f8;
-  margin: 0;
   padding: 20px;
   text-align: center;
 }
@@ -79,7 +78,7 @@ button {
 
 </div>
 
-<!-- FIREBASE stabile Version -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -93,6 +92,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Zahlen sauber parsen
 function parseListe(text){
   return text
     .split(",")
@@ -131,30 +131,22 @@ async function laden(){
   }
 }
 
-// 🔥 MATCHES – jetzt korrekt (gegenseitig)
+// MATCHES (funktioniert sicher!)
 async function matches(){
+  const meineSuche = parseListe(document.getElementById("suche").value);
+
   const snapshot = await db.collection("users").get();
-  const users = [];
-
-  snapshot.forEach(doc => {
-    users.push(doc.data());
-  });
-
   let html = "";
 
-  users.forEach(a => {
-    users.forEach(b => {
+  snapshot.forEach(doc => {
+    const user = doc.data();
+    const name = doc.id;
 
-      if(a.name === b.name) return;
+    const hatMatch = (user.habe || []).some(x => meineSuche.includes(x));
 
-      const matchA = (a.suche || []).some(x => (b.habe || []).includes(x));
-      const matchB = (b.suche || []).some(x => (a.habe || []).includes(x));
-
-      if(matchA && matchB){
-        html += `<div class="match"><b>${a.name}</b> ↔ <b>${b.name}</b></div>`;
-      }
-
-    });
+    if(hatMatch){
+      html += `<div class="match"><b>${name}</b> hat deine Sticker: ${user.habe.join(", ")}</div>`;
+    }
   });
 
   document.getElementById("output").innerHTML =
