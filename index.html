@@ -8,6 +8,7 @@
 body {
   font-family: Arial;
   background: #f4f6f8;
+  margin: 0;
   padding: 20px;
   text-align: center;
 }
@@ -24,7 +25,7 @@ body {
   width: 80px;
 }
 
-input, button {
+input {
   width: 100%;
   padding: 12px;
   margin: 6px 0;
@@ -33,9 +34,13 @@ input, button {
 }
 
 button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: none;
   background: #e30613;
   color: white;
-  border: none;
 }
 
 .match {
@@ -74,7 +79,7 @@ button {
 
 </div>
 
-<!-- FIREBASE -->
+<!-- FIREBASE stabile Version -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -126,10 +131,8 @@ async function laden(){
   }
 }
 
-// MATCHES (JETZT RICHTIG!)
+// 🔥 MATCHES – jetzt korrekt (gegenseitig)
 async function matches(){
-  const meinName = document.getElementById("name").value.trim();
-
   const snapshot = await db.collection("users").get();
   const users = [];
 
@@ -144,11 +147,10 @@ async function matches(){
 
       if(a.name === b.name) return;
 
-      const match =
-        (a.suche || []).some(x => (b.habe || []).includes(x)) &&
-        (b.suche || []).some(x => (a.habe || []).includes(x));
+      const matchA = (a.suche || []).some(x => (b.habe || []).includes(x));
+      const matchB = (b.suche || []).some(x => (a.habe || []).includes(x));
 
-      if(match){
+      if(matchA && matchB){
         html += `<div class="match"><b>${a.name}</b> ↔ <b>${b.name}</b></div>`;
       }
 
