@@ -1,5 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Sticker Tauschbörse</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f4f6f8;
+  padding: 20px;
+  text-align: center;
+}
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.logo {
+  width: 80px;
+}
+
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background: #e30613;
+  color: white;
+  border: none;
+}
+
+.match {
+  background: #e8f4ff;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+
+.sticker-img {
+  width: 100%;
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<img src="images (1).png" class="logo">
+
+<h2>Sticker Tauschbörse</h2>
+
+<input id="name" placeholder="Name (z.B. AnnaM)">
+<input id="habe" placeholder="Habe (z.B. 1,5,23)">
+<input id="suche" placeholder="Suche (z.B. 8,12,44)">
+
+<button onclick="speichern()">Speichern</button>
+<button onclick="laden()">Meine Daten laden</button>
+<button onclick="matches()">Matches anzeigen</button>
+
+<div id="output"></div>
+
+<img src="PXL_20260420_065327386.jpg" class="sticker-img">
+
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
-async function zeigeMatches() {
+const firebaseConfig = {
+  apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
+  authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
+  projectId: "gtv-baskets-stickertausch"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function parseListe(text){
+  return text
+    .split(",")
+    .map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x));
+}
+
+// SPEICHERN
+function speichern(){
+  const name = document.getElementById("name").value.trim();
+  const habe = parseListe(document.getElementById("habe").value);
+  const suche = parseListe(document.getElementById("suche").value);
+
+  if(!name) return alert("Name fehlt!");
+
+  db.collection("users").doc(name).set({
+    name: name,
+    habe: habe,
+    suche: suche
+  });
+
+  alert("Gespeichert!");
+}
+
+// LADEN
+async function laden(){
+  const name = document.getElementById("name").value.trim();
+  const doc = await db.collection("users").doc(name).get();
+
+  if(doc.exists){
+    const data = doc.data();
+    document.getElementById("habe").value = (data.habe || []).join(", ");
+    document.getElementById("suche").value = (data.suche || []).join(", ");
+  } else {
+    alert("Keine Daten gefunden!");
+  }
+}
+
+// MATCHES (JETZT RICHTIG!)
+async function matches(){
+  const meinName = document.getElementById("name").value.trim();
+
   const snapshot = await db.collection("users").get();
   const users = [];
 
@@ -9,34 +139,26 @@ async function zeigeMatches() {
 
   let html = "";
 
-  users.forEach(userA => {
-    users.forEach(userB => {
-      if (userA.name !== userB.name) {
+  users.forEach(a => {
+    users.forEach(b => {
 
-        const habeA = userA.habe || [];
-        const sucheA = userA.suche || [];
+      if(a.name === b.name) return;
 
-        const habeB = userB.habe || [];
-        const sucheB = userB.suche || [];
+      const match =
+        (a.suche || []).some(x => (b.habe || []).includes(x)) &&
+        (b.suche || []).some(x => (a.habe || []).includes(x));
 
-        // 🔥 WICHTIG: ALLES in Zahlen umwandeln
-        const habeANum = habeA.map(x => Number(x));
-        const sucheANum = sucheA.map(x => Number(x));
-        const habeBNum = habeB.map(x => Number(x));
-        const sucheBNum = sucheB.map(x => Number(x));
-
-        const match =
-          sucheANum.some(x => habeBNum.includes(x)) &&
-          sucheBNum.some(x => habeANum.includes(x));
-
-        if (match) {
-          html += `<div class="match"><b>${userA.name}</b> ↔ <b>${userB.name}</b></div>`;
-        }
+      if(match){
+        html += `<div class="match"><b>${a.name}</b> ↔ <b>${b.name}</b></div>`;
       }
+
     });
   });
 
   document.getElementById("output").innerHTML =
-    html || "Keine Matches";
+    html || "Keine Matches gefunden";
 }
 </script>
+
+</body>
+</html>
