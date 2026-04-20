@@ -40,6 +40,7 @@ button {
   border: none;
   background: #e30613;
   color: white;
+  cursor: pointer;
 }
 
 .match {
@@ -52,6 +53,7 @@ button {
 .sticker-img {
   width: 100%;
   margin-top: 20px;
+  border-radius: 10px;
 }
 </style>
 </head>
@@ -64,9 +66,9 @@ button {
 
 <h2>Sticker Tauschbörse</h2>
 
-<input id="name" placeholder="Name">
-<input id="habe" placeholder="Habe (1,5,23)">
-<input id="suche" placeholder="Suche (8,12,44)">
+<input id="name" placeholder="Name (z.B. AnnaM)">
+<input id="habe" placeholder="Habe (z.B. 1,5,23)">
+<input id="suche" placeholder="Suche (z.B. 8,12,44)">
 
 <button onclick="window.speichern()">Speichern</button>
 <button onclick="window.laden()">Meine Daten laden</button>
@@ -95,17 +97,17 @@ function parseListe(text){
   return text.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x));
 }
 
-window.speichern = async function(){
+window.speichern = function(){
   const name = document.getElementById("name").value.trim();
   const habe = parseListe(document.getElementById("habe").value);
   const suche = parseListe(document.getElementById("suche").value);
 
   if(!name) return alert("Name fehlt!");
 
-  await db.collection("users").doc(name).set({
-    name,
-    habe,
-    suche
+  db.collection("users").doc(name).set({
+    name: name,
+    habe: habe,
+    suche: suche
   });
 
   alert("Gespeichert!");
@@ -131,16 +133,13 @@ window.matches = async function(){
 
   const meinDoc = await db.collection("users").doc(name).get();
 
-  let meineSuche = [];
-
-  if(meinDoc.exists){
-    meineSuche = meinDoc.data().suche || [];
+  if(!meinDoc.exists){
+    alert("User nicht gefunden!");
+    return;
   }
 
-  // 🔥 FALLBACK → nimmt Eingabefeld
-  if(meineSuche.length === 0){
-    meineSuche = parseListe(document.getElementById("suche").value);
-  }
+  const meineDaten = meinDoc.data();
+  const meineSuche = meineDaten.suche || [];
 
   const snapshot = await db.collection("users").get();
 
