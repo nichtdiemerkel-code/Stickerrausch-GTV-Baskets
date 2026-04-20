@@ -8,7 +8,6 @@
 body {
   font-family: Arial;
   background: #f4f6f8;
-  margin: 0;
   padding: 20px;
   text-align: center;
 }
@@ -19,31 +18,19 @@ body {
   background: white;
   padding: 20px;
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.logo {
-  width: 80px;
-  margin-bottom: 10px;
-}
-
-input {
+input, button {
   width: 100%;
   padding: 12px;
   margin: 6px 0;
-  border: 1px solid #ccc;
   border-radius: 10px;
 }
 
 button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  border-radius: 10px;
-  border: none;
   background: #e30613;
   color: white;
-  font-weight: bold;
+  border: none;
 }
 
 .match {
@@ -56,7 +43,6 @@ button {
 .sticker-img {
   width: 100%;
   margin-top: 20px;
-  border-radius: 12px;
 }
 </style>
 </head>
@@ -65,12 +51,11 @@ button {
 
 <div class="container">
 
-<!-- LOGO OBEN -->
-<img src="images (1).png" class="logo">
+<img src="images (1).png" style="width:80px;">
 
 <h2>Sticker Tauschbörse</h2>
 
-<input id="name" placeholder="Name (z.B. AnnaM)">
+<input id="name" placeholder="Name">
 <input id="habe" placeholder="Habe (z.B. 1,5,23)">
 <input id="suche" placeholder="Suche (z.B. 8,12,44)">
 
@@ -80,79 +65,72 @@ button {
 
 <div id="output"></div>
 
-<!-- STICKERBILD UNTEN -->
 <img src="PXL_20260420_065327386.jpg" class="sticker-img">
 
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.2.0/firebase-firestore.js";
+<!-- FIREBASE (stabile Version) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
   authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
-  projectId: "gtv-baskets-stickertausch",
-  storageBucket: "gtv-baskets-stickertausch.firebasestorage.app",
-  messagingSenderId: "533155128539",
-  appId: "1:533155128539:web:c309efb7827301617a98fe"
+  projectId: "gtv-baskets-stickertausch"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-function parseListe(text) {
-  return text.split(",")
-    .map(x => parseInt(x.trim()))
-    .filter(x => !isNaN(x));
+function parseListe(text){
+  return text.split(",").map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
 }
 
-window.speichern = async function() {
+function speichern(){
   const name = document.getElementById("name").value.trim();
   const habe = parseListe(document.getElementById("habe").value);
   const suche = parseListe(document.getElementById("suche").value);
 
-  if (!name) return alert("Name fehlt!");
+  if(!name) return alert("Name fehlt!");
 
-  await setDoc(doc(db, "users", name), { habe, suche });
+  db.collection("users").doc(name).set({habe, suche});
   alert("Gespeichert!");
-};
+}
 
-window.laden = async function() {
+async function laden(){
   const name = document.getElementById("name").value.trim();
-  const docSnap = await getDoc(doc(db, "users", name));
+  const doc = await db.collection("users").doc(name).get();
 
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    document.getElementById("habe").value = (data.habe || []).join(", ");
-    document.getElementById("suche").value = (data.suche || []).join(", ");
+  if(doc.exists){
+    const data = doc.data();
+    document.getElementById("habe").value = (data.habe||[]).join(", ");
+    document.getElementById("suche").value = (data.suche||[]).join(", ");
   } else {
-    alert("Keine Daten gefunden!");
+    alert("Keine Daten gefunden");
   }
-};
+}
 
-window.matches = async function() {
+async function matches(){
   const meinName = document.getElementById("name").value.trim();
   const meineSuche = parseListe(document.getElementById("suche").value);
 
-  const querySnapshot = await getDocs(collection(db, "users"));
+  const snapshot = await db.collection("users").get();
   let html = "";
 
-  querySnapshot.forEach(docSnap => {
-    const user = docSnap.data();
-    const name = docSnap.id;
+  snapshot.forEach(doc=>{
+    const user = doc.data();
+    const name = doc.id;
 
-    if (name === meinName) return;
+    if(name === meinName) return;
 
-    const hatMatch = (user.habe || []).some(x => meineSuche.includes(x));
-
-    if (hatMatch) {
-      html += `<div class="match"><b>${name}</b> hat deine Sticker: ${user.habe.join(", ")}</div>`;
+    if((user.habe||[]).some(x=>meineSuche.includes(x))){
+      html += `<div class="match"><b>${name}</b> hat deine Sticker</div>`;
     }
   });
 
   document.getElementById("output").innerHTML = html || "Keine Matches gefunden";
-};
+}
 </script>
 
 </body>
