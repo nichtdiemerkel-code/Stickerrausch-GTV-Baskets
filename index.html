@@ -40,6 +40,7 @@ button {
   border: none;
   background: #e30613;
   color: white;
+  cursor: pointer;
 }
 
 .match {
@@ -68,9 +69,9 @@ button {
 <input id="habe" placeholder="Habe (z.B. 1,5,23)">
 <input id="suche" placeholder="Suche (z.B. 8,12,44)">
 
-<button onclick="speichern()">Speichern</button>
-<button onclick="laden()">Meine Daten laden</button>
-<button onclick="matches()">Matches anzeigen</button>
+<button onclick="window.speichern()">Speichern</button>
+<button onclick="window.laden()">Meine Daten laden</button>
+<button onclick="window.matches()">Matches anzeigen</button>
 
 <div id="output"></div>
 
@@ -78,7 +79,6 @@ button {
 
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -92,16 +92,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Zahlen sauber parsen
 function parseListe(text){
-  return text
-    .split(",")
-    .map(x => parseInt(x.trim()))
-    .filter(x => !isNaN(x));
+  return text.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x));
 }
 
-// SPEICHERN
-function speichern(){
+// 🔥 WICHTIG: window. davor!
+window.speichern = function(){
   const name = document.getElementById("name").value.trim();
   const habe = parseListe(document.getElementById("habe").value);
   const suche = parseListe(document.getElementById("suche").value);
@@ -115,10 +111,9 @@ function speichern(){
   });
 
   alert("Gespeichert!");
-}
+};
 
-// LADEN
-async function laden(){
+window.laden = async function(){
   const name = document.getElementById("name").value.trim();
   const doc = await db.collection("users").doc(name).get();
 
@@ -129,20 +124,14 @@ async function laden(){
   } else {
     alert("Keine Daten gefunden!");
   }
-}
+};
 
-// MATCHES (FINAL – nutzt Firebase-Daten, nicht Eingabefeld!)
-async function matches(){
+window.matches = async function(){
+  const name = document.getElementById("name").value.trim();
 
-  const meinName = document.getElementById("name").value.trim();
+  if(!name) return alert("Name eingeben!");
 
-  if(!meinName){
-    alert("Bitte Name eingeben!");
-    return;
-  }
-
-  // 🔥 eigene Daten laden
-  const meinDoc = await db.collection("users").doc(meinName).get();
+  const meinDoc = await db.collection("users").doc(name).get();
 
   if(!meinDoc.exists){
     alert("User nicht gefunden!");
@@ -157,23 +146,21 @@ async function matches(){
   let html = "";
 
   snapshot.forEach(doc => {
-    const name = doc.id;
     const user = doc.data();
+    const otherName = doc.id;
 
-    if(name === meinName) return;
+    if(otherName === name) return;
 
     const habe = user.habe || [];
 
-    const match = habe.some(x => meineSuche.includes(x));
-
-    if(match){
-      html += `<div class="match"><b>${name}</b> hat deine Sticker</div>`;
+    if(habe.some(x => meineSuche.includes(x))){
+      html += `<div class="match"><b>${otherName}</b> hat deine Sticker</div>`;
     }
   });
 
   document.getElementById("output").innerHTML =
     html || "Keine Matches gefunden";
-}
+};
 </script>
 
 </body>
