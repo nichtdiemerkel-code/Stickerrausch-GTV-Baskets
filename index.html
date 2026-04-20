@@ -63,10 +63,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    function sortiereListe(text) {
+      return text
+        .split(",")
+        .map(x => parseInt(x.trim()))
+        .filter(x => !isNaN(x))
+        .sort((a, b) => a - b);
+    }
+
     window.saveData = function () {
       const name = document.getElementById("name").value;
-      const habe = document.getElementById("habe").value.split(",").map(x => x.trim());
-      const suche = document.getElementById("suche").value.split(",").map(x => x.trim());
+      const habe = sortiereListe(document.getElementById("habe").value);
+      const suche = sortiereListe(document.getElementById("suche").value);
 
       push(ref(db, "users"), {
         name,
@@ -102,7 +110,27 @@
             }
           });
         });
-      });
+      }, { onlyOnce: true });
+    };
+
+    window.loadMyData = function () {
+      const name = document.getElementById("name").value;
+
+      onValue(ref(db, "users"), (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        const users = Object.values(data);
+        const user = users.find(u => u.name === name);
+
+        if (!user) {
+          alert("Keine Daten gefunden!");
+          return;
+        }
+
+        document.getElementById("habe").value = user.habe.join(",");
+        document.getElementById("suche").value = user.suche.join(",");
+      }, { onlyOnce: true });
     };
   </script>
 </head>
@@ -122,6 +150,7 @@
   <input id="suche" placeholder="Suche (z. B. 5,8,10)">
 
   <button onclick="saveData()">Speichern</button>
+  <button onclick="loadMyData()">Meine Daten laden</button>
   <button onclick="showMatches()">Matches anzeigen</button>
 
   <div id="matches"></div>
