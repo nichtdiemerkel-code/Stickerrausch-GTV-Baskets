@@ -120,4 +120,26 @@ async function matches(){
     return;
   }
 
-  const
+  const meineSuche = myDoc.data().suche || [];
+
+  const snapshot = await db.collection("users").get();
+
+  let html = "";
+
+  snapshot.forEach(doc => {
+    if(doc.id === name) return;
+
+    const user = doc.data();
+    const gemeinsame = (user.habe || []).filter(x => meineSuche.includes(x));
+
+    if(gemeinsame.length > 0){
+      html += `<div class="match"><b>${doc.id}</b>: ${gemeinsame.join(", ")}</div>`;
+    }
+  });
+
+  document.getElementById("output").innerHTML = html || "Keine Matches";
+}
+</script>
+
+</body>
+</html>
