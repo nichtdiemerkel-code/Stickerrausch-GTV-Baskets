@@ -25,6 +25,7 @@ input, button {
   padding: 12px;
   margin: 6px 0;
   border-radius: 10px;
+  border: 1px solid #ccc;
 }
 
 button {
@@ -39,19 +40,12 @@ button {
   margin-top: 8px;
   border-radius: 8px;
 }
-
-.sticker-img {
-  width: 100%;
-  margin-top: 20px;
-}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
-<img src="images (1).png" style="width:80px;">
 
 <h2>Sticker Tauschbörse</h2>
 
@@ -60,16 +54,13 @@ button {
 <input id="suche" placeholder="Suche (z.B. 8,12,44)">
 
 <button onclick="speichern()">Speichern</button>
-<button onclick="laden()">Meine Daten laden</button>
-<button onclick="matches()">Matches anzeigen</button>
+<button onclick="laden()">Laden</button>
+<button onclick="matches()">Matches</button>
 
 <div id="output"></div>
 
-<img src="PXL_20260420_065327386.jpg" class="sticker-img">
-
 </div>
 
-<!-- FIREBASE (stabile Version) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -92,10 +83,8 @@ function speichern(){
   const habe = parseListe(document.getElementById("habe").value);
   const suche = parseListe(document.getElementById("suche").value);
 
-  if(!name) return alert("Name fehlt!");
-
   db.collection("users").doc(name).set({habe, suche});
-  alert("Gespeichert!");
+  alert("Gespeichert");
 }
 
 async function laden(){
@@ -104,10 +93,10 @@ async function laden(){
 
   if(doc.exists){
     const data = doc.data();
-    document.getElementById("habe").value = (data.habe||[]).join(", ");
-    document.getElementById("suche").value = (data.suche||[]).join(", ");
+    document.getElementById("habe").value = data.habe.join(",");
+    document.getElementById("suche").value = data.suche.join(",");
   } else {
-    alert("Keine Daten gefunden");
+    alert("Nicht gefunden");
   }
 }
 
@@ -124,12 +113,12 @@ async function matches(){
 
     if(name === meinName) return;
 
-    if((user.habe||[]).some(x=>meineSuche.includes(x))){
-      html += `<div class="match"><b>${name}</b> hat deine Sticker</div>`;
+    if(user.habe.some(x=>meineSuche.includes(x))){
+      html += `<div class="match">${name} hat deine Sticker</div>`;
     }
   });
 
-  document.getElementById("output").innerHTML = html || "Keine Matches gefunden";
+  document.getElementById("output").innerHTML = html || "Keine Matches";
 }
 </script>
 
