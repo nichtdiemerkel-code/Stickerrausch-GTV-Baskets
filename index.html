@@ -53,7 +53,6 @@ button {
 .sticker-img {
   width: 100%;
   margin-top: 20px;
-  border-radius: 10px;
 }
 </style>
 </head>
@@ -62,11 +61,12 @@ button {
 
 <div class="container">
 
-<img src="https://upload.wikimedia.org/wikipedia/de/thumb/3/3b/GTV_Baskets_Logo.svg/512px-GTV_Baskets_Logo.svg.png" class="logo">
+<!-- ✅ LOGO FIX -->
+<img src="https://raw.githubusercontent.com/nichtdiemerkel-code/Stickerrausch-GTV-Baskets/main/images%20(1).png" class="logo">
 
 <h2>Sticker Tauschbörse</h2>
 
-<input id="name" placeholder="Name (z.B. AnnaM)">
+<input id="name" placeholder="Name (z.B. AngelaA)">
 <input id="habe" placeholder="Habe (z.B. 1,5,23)">
 <input id="suche" placeholder="Suche (z.B. 8,12,44)">
 
@@ -76,7 +76,8 @@ button {
 
 <div id="output"></div>
 
-<img src="https://images.unsplash.com/photo-1606813909025-c69b9a1b6c2f" class="sticker-img">
+<!-- ✅ FOTO FIX -->
+<img src="https://raw.githubusercontent.com/nichtdiemerkel-code/Stickerrausch-GTV-Baskets/main/PXL_20260420_065327386.jpg" class="sticker-img">
 
 </div>
 
@@ -153,10 +154,10 @@ window.matches = async function(){
 
     const habe = user.habe || [];
 
-    const gemeinsame = habe.filter(x => meineSuche.includes(x));
+    const matches = habe.filter(x => meineSuche.includes(x));
 
-    if(gemeinsame.length > 0){
-      html += `<div class="match"><b>${otherName}</b> hat deine Sticker: ${gemeinsame.join(", ")}</div>`;
+    if(matches.length > 0){
+      html += `<div class="match"><b>${otherName}</b> hat deine Sticker: ${matches.join(", ")}</div>`;
     }
   });
 
