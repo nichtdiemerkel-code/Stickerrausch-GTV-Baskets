@@ -1,103 +1,116 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Sticker Tauschbörse</title>
+<meta charset="UTF-8">
+<title>Sticker Tauschbörse</title>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+}
 
-    .card {
-      background: white;
-      max-width: 400px;
-      margin: auto;
-      padding: 20px;
-      border-radius: 12px;
-    }
+.container {
+  max-width: 420px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+}
 
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 6px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
+.logo {
+  width: 90px;
+  margin-bottom: 10px;
+}
 
-    button {
-      width: 100%;
-      padding: 14px;
-      margin: 6px 0;
-      border: none;
-      border-radius: 8px;
-      background: red;
-      color: white;
-      font-weight: bold;
-      font-size: 16px;
-    }
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
 
-    .match {
-      background: #e6eef6;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-    }
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: none;
+  background: #e30613;
+  color: white;
+  cursor: pointer;
+}
 
-    img {
-      width: 100%;
-      margin-top: 15px;
-      border-radius: 10px;
-    }
-  </style>
+.match {
+  background: #e8f4ff;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+
+.sticker-img {
+  width: 100%;
+  max-width: 320px;
+  margin-top: 20px;
+  border-radius: 12px;
+}
+</style>
 </head>
 
 <body>
 
-<div class="card">
+<div class="container">
 
-  <img src="https://upload.wikimedia.org/wikipedia/de/thumb/3/3b/GTV_Baskets_Logo.svg/512px-GTV_Baskets_Logo.svg.png">
+<img src="images (1).png" class="logo">
 
-  <h2>Sticker Tauschbörse</h2>
+<h2>Sticker Tauschbörse</h2>
 
-  <input id="name" placeholder="Name (z. B. Anna)">
-  <input id="habe" placeholder="Habe (z. B. 1,5,23)">
-  <input id="suche" placeholder="Suche (z. B. 8,12,44)">
+<input id="name" placeholder="Name (z. B. AnnaM)">
+<input id="habe" placeholder="Habe (z. B. 1,5,23)">
+<input id="suche" placeholder="Suche (z. B. 8,12,44)">
 
-  <button onclick="speichern()">Speichern</button>
-  <button onclick="laden()">Meine Daten laden</button>
-  <button onclick="matches()">Matches anzeigen</button>
+<button onclick="speichern()">Speichern</button>
+<button onclick="laden()">Meine Daten laden</button>
+<button onclick="matches()">Matches anzeigen</button>
 
-  <div id="output"></div>
+<div id="output"></div>
 
-  <img src="https://images.unsplash.com/photo-1606813909025-c69b9a1b6c2f">
+<img src="PXL_20260420_065327386.jpg" class="sticker-img">
+
 </div>
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyDemoKey123456",
-  authDomain: "demo-project.firebaseapp.com",
-  projectId: "demo-project"
+  apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
+  authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
+  projectId: "gtv-baskets-stickertausch",
+  storageBucket: "gtv-baskets-stickertausch.firebasestorage.app",
+  messagingSenderId: "533155128539",
+  appId: "1:533155128539:web:c309efb7827301617a98fe"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-function parse(str){
-  return str.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+function parseListe(text){
+  return text.split(",")
+    .map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x));
 }
 
 function speichern(){
-  const name = document.getElementById("name").value;
-  const habe = parse(document.getElementById("habe").value);
-  const suche = parse(document.getElementById("suche").value);
+  const name = document.getElementById("name").value.trim();
+  const habe = parseListe(document.getElementById("habe").value);
+  const suche = parseListe(document.getElementById("suche").value);
+
+  if(!name) return alert("Name fehlt!");
 
   db.collection("users").doc(name).set({
     name,
@@ -109,33 +122,45 @@ function speichern(){
 }
 
 async function laden(){
-  const name = document.getElementById("name").value;
+  const name = document.getElementById("name").value.trim();
 
-  const doc = await db.collection("users").doc(name).get();
+  const docSnap = await db.collection("users").doc(name).get();
 
-  if(doc.exists){
-    const data = doc.data();
-
-    document.getElementById("habe").value = data.habe.join(", ");
-    document.getElementById("suche").value = data.suche.join(", ");
+  if(docSnap.exists){
+    const data = docSnap.data();
+    document.getElementById("habe").value = (data.habe || []).join(", ");
+    document.getElementById("suche").value = (data.suche || []).join(", ");
+  } else {
+    alert("Keine Daten gefunden!");
   }
 }
 
 async function matches(){
-  const myName = document.getElementById("name").value;
-  const meineSuche = parse(document.getElementById("suche").value);
+  const myName = document.getElementById("name").value.trim();
+
+  if(!myName) return alert("Name eingeben!");
+
+  const myDoc = await db.collection("users").doc(myName).get();
+
+  if(!myDoc.exists){
+    alert("User nicht gefunden!");
+    return;
+  }
+
+  const meineDaten = myDoc.data();
+  const meineSuche = meineDaten.suche || [];
 
   const snapshot = await db.collection("users").get();
 
   let html = "";
 
   snapshot.forEach(doc => {
-    const data = doc.data();
-    const otherName = data.name;
+    const user = doc.data();
+    const otherName = doc.id;
 
     if(otherName === myName) return;
 
-    const habe = data.habe || [];
+    const habe = user.habe || [];
 
     const gemeinsame = habe.filter(x => meineSuche.includes(x));
 
@@ -144,7 +169,8 @@ async function matches(){
     }
   });
 
-  document.getElementById("output").innerHTML = html || "Keine Matches";
+  document.getElementById("output").innerHTML =
+    html || "Keine Matches gefunden";
 }
 </script>
 
