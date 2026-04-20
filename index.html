@@ -5,56 +5,11 @@
 <title>Sticker Tauschbörse</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: #f4f6f8;
-  margin: 0;
-  padding: 20px;
-  text-align: center;
-}
-
-.container {
-  max-width: 420px;
-  margin: auto;
-  background: white;
-  padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.logo {
-  width: 70px;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin: 6px 0;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  border-radius: 10px;
-  border: none;
-  background: #e30613;
-  color: white;
-}
-
-.match {
-  background: #e8f4ff;
-  padding: 10px;
-  margin-top: 8px;
-  border-radius: 8px;
-}
-
-.sticker-img {
-  width: 100%;
-  margin-top: 20px;
-}
+body { font-family: Arial; background: #f4f6f8; padding:20px; text-align:center;}
+.container { max-width:420px; margin:auto; background:white; padding:20px; border-radius:16px;}
+input, button { width:100%; padding:12px; margin:6px 0; border-radius:10px;}
+button { background:#e30613; color:white; border:none;}
+.match { background:#e8f4ff; padding:10px; margin-top:8px; border-radius:8px;}
 </style>
 </head>
 
@@ -62,21 +17,17 @@ button {
 
 <div class="container">
 
-<img src="images (1).png" class="logo">
-
 <h2>Sticker Tauschbörse</h2>
 
-<input id="name" placeholder="Name (z.B. AnnaM)">
-<input id="habe" placeholder="Habe (z.B. 1,5,23)">
-<input id="suche" placeholder="Suche (z.B. 8,12,44)">
+<input id="name" placeholder="Name">
+<input id="habe" placeholder="Habe (z.B. 1,2,3)">
+<input id="suche" placeholder="Suche (z.B. 4,5,6)">
 
 <button onclick="speichern()">Speichern</button>
 <button onclick="laden()">Meine Daten laden</button>
 <button onclick="matches()">Matches anzeigen</button>
 
 <div id="output"></div>
-
-<img src="PXL_20260420_065327386.jpg" class="sticker-img">
 
 </div>
 
@@ -88,69 +39,56 @@ const firebaseConfig = {
   apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
   authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
   projectId: "gtv-baskets-stickertausch",
-  storageBucket: "gtv-baskets-stickertausch.firebasestorage.app",
-  messagingSenderId: "533155128539",
-  appId: "1:533155128539:web:c309efb7827301617a98fe"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-function parseListe(text) {
-  return text.split(",")
-    .map(x => x.trim())
-    .filter(x => x !== "");
+function parse(text){
+  return text.split(",").map(x=>x.trim()).filter(x=>x!=="");
 }
 
-window.speichern = async function() {
+window.speichern = async ()=>{
   const name = document.getElementById("name").value.trim();
-  const habe = parseListe(document.getElementById("habe").value);
-  const suche = parseListe(document.getElementById("suche").value);
+  const habe = parse(document.getElementById("habe").value);
+  const suche = parse(document.getElementById("suche").value);
 
-  if (!name) return alert("Name fehlt!");
-
-  await setDoc(doc(db, "users", name), { habe, suche });
-
-  alert("Gespeichert!");
+  await setDoc(doc(db,"users",name),{habe,suche});
+  alert("Gespeichert");
 };
 
-window.laden = async function() {
+window.laden = async ()=>{
   const name = document.getElementById("name").value.trim();
-
-  const docSnap = await getDoc(doc(db, "users", name));
-
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    document.getElementById("habe").value = (data.habe || []).join(", ");
-    document.getElementById("suche").value = (data.suche || []).join(", ");
-  } else {
-    alert("Nicht gefunden!");
+  const d = await getDoc(doc(db,"users",name));
+  if(d.exists()){
+    document.getElementById("habe").value = (d.data().habe||[]).join(",");
+    document.getElementById("suche").value = (d.data().suche||[]).join(",");
   }
 };
 
-window.matches = async function() {
-  const meineSuche = parseListe(document.getElementById("suche").value);
+window.matches = async ()=>{
   const meinName = document.getElementById("name").value.trim();
+  const meineSuche = parse(document.getElementById("suche").value);
+  const meinHabe = parse(document.getElementById("habe").value);
 
-  const querySnapshot = await getDocs(collection(db, "users"));
-  let html = "";
+  const snap = await getDocs(collection(db,"users"));
+  let html="";
 
-  querySnapshot.forEach(docSnap => {
+  snap.forEach(docSnap=>{
     const user = docSnap.data();
     const name = docSnap.id;
 
-    if (name === meinName) return;
+    if(name===meinName) return;
 
-    const habeListe = (user.habe || []).map(x => x.toString());
+    const hatMeine = (user.habe||[]).some(x=>meineSuche.includes(x));
+    const ichHabeSeine = meinHabe.some(x=>(user.suche||[]).includes(x));
 
-    const matches = meineSuche.filter(s => habeListe.includes(s.toString()));
-
-    if (matches.length > 0) {
-      html += `<div class="match"><b>${name}</b> hat: ${matches.join(", ")}</div>`;
+    if(hatMeine || ichHabeSeine){
+      html += `<div class="match"><b>${name}</b> passt zu dir</div>`;
     }
   });
 
-  document.getElementById("output").innerHTML = html || "Keine Matches gefunden";
+  document.getElementById("output").innerHTML = html || "Keine Matches";
 };
 </script>
 
