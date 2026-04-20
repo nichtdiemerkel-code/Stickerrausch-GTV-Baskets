@@ -98,9 +98,8 @@ const db = getFirestore(app);
 
 function parseListe(text) {
   return text.split(",")
-    .map(x => Number(x.trim()))
-    .filter(x => !isNaN(x))
-    .sort((a, b) => a - b);
+    .map(x => x.trim())
+    .filter(x => x !== "");
 }
 
 window.speichern = async function() {
@@ -142,12 +141,12 @@ window.matches = async function() {
 
     if (name === meinName) return;
 
-    const habeListe = (user.habe || []).map(Number);
+    const habeListe = (user.habe || []).map(x => x.toString());
 
-    const gefunden = meineSuche.filter(s => habeListe.includes(Number(s)));
+    const matches = meineSuche.filter(s => habeListe.includes(s.toString()));
 
-    if (gefunden.length > 0) {
-      html += `<div class="match"><b>${name}</b> hat: ${gefunden.join(", ")}</div>`;
+    if (matches.length > 0) {
+      html += `<div class="match"><b>${name}</b> hat: ${matches.join(", ")}</div>`;
     }
   });
 
