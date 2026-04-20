@@ -40,6 +40,8 @@ button {
   margin-top: 8px;
   border-radius: 10px;
   border: none;
+  background: #e30613;
+  color: white;
 }
 
 .match {
@@ -64,9 +66,9 @@ button {
 
 <h2>Sticker Tauschbörse</h2>
 
-<input id="name" placeholder="Name">
-<input id="habe" placeholder="Habe">
-<input id="suche" placeholder="Suche">
+<input id="name" placeholder="Name (z.B. AnnaM)">
+<input id="habe" placeholder="Habe (z.B. 1,5,23)">
+<input id="suche" placeholder="Suche (z.B. 8,12,44)">
 
 <button onclick="speichern()">Speichern</button>
 <button onclick="laden()">Meine Daten laden</button>
@@ -78,45 +80,80 @@ button {
 
 </div>
 
-<script>
-let daten = [];
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.2.0/firebase-firestore.js";
 
-function speichern() {
-  const name = document.getElementById("name").value;
-  const habe = document.getElementById("habe").value;
-  const suche = document.getElementById("suche").value;
+const firebaseConfig = {
+  apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
+  authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
+  projectId: "gtv-baskets-stickertausch",
+  storageBucket: "gtv-baskets-stickertausch.firebasestorage.app",
+  messagingSenderId: "533155128539",
+  appId: "1:533155128539:web:c309efb7827301617a98fe"
+};
 
-  daten.push({name, habe, suche});
-  alert("Gespeichert (Testmodus)");
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function parseListe(text) {
+  return text.split(",")
+    .map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x))
+    .sort((a, b) => a - b);
 }
 
-function laden() {
-  const name = document.getElementById("name").value;
-  const eintrag = daten.find(d => d.name === name);
+window.speichern = async function() {
+  const name = document.getElementById("name").value.trim();
+  const habe = parseListe(document.getElementById("habe").value);
+  const suche = parseListe(document.getElementById("suche").value);
 
-  if (eintrag) {
-    document.getElementById("habe").value = eintrag.habe;
-    document.getElementById("suche").value = eintrag.suche;
-  } else {
-    alert("Nicht gefunden");
-  }
-}
+  if (!name) return alert("Name fehlt!");
 
-function matches() {
-  let meineSuche = document.getElementById("suche").value.split(",");
-  let output = "";
-
-  daten.forEach(d => {
-    let habeListe = d.habe.split(",");
-    meineSuche.forEach(s => {
-      if (habeListe.includes(s.trim())) {
-        output += `<div class="match">${d.name} hat ${s}</div>`;
-      }
-    });
+  await setDoc(doc(db, "users", name), {
+    habe,
+    suche
   });
 
-  document.getElementById("output").innerHTML = output;
-}
+  alert("Gespeichert!");
+};
+
+window.laden = async function() {
+  const name = document.getElementById("name").value.trim();
+
+  const docSnap = await getDoc(doc(db, "users", name));
+
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    document.getElementById("habe").value = data.habe.join(", ");
+    document.getElementById("suche").value = data.suche.join(", ");
+  } else {
+    alert("Nicht gefunden!");
+  }
+};
+
+window.matches = async function() {
+  const meineSuche = parseListe(document.getElementById("suche").value);
+  const meinName = document.getElementById("name").value.trim();
+
+  const querySnapshot = await getDocs(collection(db, "users"));
+  let html = "";
+
+  querySnapshot.forEach(docSnap => {
+    const user = docSnap.data();
+    const name = docSnap.id;
+
+    if (name === meinName) return;
+
+    const matches = meineSuche.filter(s => user.habe.includes(s));
+
+    if (matches.length > 0) {
+      html += `<div class="match"><b>${name}</b> hat: ${matches.join(", ")}</div>`;
+    }
+  });
+
+  document.getElementById("output").innerHTML = html || "Keine Matches gefunden";
+};
 </script>
 
 </body>
