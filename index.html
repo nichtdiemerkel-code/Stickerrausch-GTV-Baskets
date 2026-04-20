@@ -10,6 +10,7 @@
       max-width: 500px;
       margin: auto;
       padding: 10px;
+      text-align: center;
     }
 
     input, button {
@@ -25,25 +26,20 @@
       border-radius: 5px;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
     .logo-big {
       width: 140px;
-      border-radius: 10px;
+      margin-bottom: 10px;
     }
 
     .bottom-img {
       width: 120px;
-      display: block;
-      margin: 30px auto;
+      margin-top: 40px;
     }
 
     .subtitle {
       color: gray;
       font-size: 14px;
+      margin-bottom: 20px;
     }
   </style>
 
@@ -105,60 +101,4 @@
         }
 
         document.getElementById("habe").value = data.habe.join(",");
-        document.getElementById("suche").value = data.suche.join(",");
-      }, { onlyOnce: true });
-    };
-
-    window.showMatches = function () {
-      const matchDiv = document.getElementById("matches");
-      matchDiv.innerHTML = "";
-
-      onValue(ref(db, "users"), (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-
-        const users = Object.values(data);
-
-        users.forEach(userA => {
-          users.forEach(userB => {
-            if (userA !== userB) {
-              userA.suche.forEach(sticker => {
-                if (userB.habe.includes(sticker)) {
-                  matchDiv.innerHTML += `
-                    <div class="match">
-                      ${userA.name} sucht ${sticker} → ${userB.name} hat es
-                    </div>
-                  `;
-                }
-              });
-            }
-          });
-        });
-      }, { onlyOnce: true });
-    };
-  </script>
-</head>
-
-<body>
-
-  <div class="header">
-    <img src="PXL_20260420_065327386.jpg" class="logo-big">
-    <h2>Sticker Tauschbörse</h2>
-    <div class="subtitle">GTV Baskets</div>
-  </div>
-
-  <input id="name" placeholder="Dein Name">
-  <input id="habe" placeholder="Habe (z. B. 1,2,3)">
-  <input id="suche" placeholder="Suche (z. B. 5,8,10)">
-
-  <button onclick="saveData()">Speichern</button>
-  <button onclick="loadMyData()">Meine Daten laden</button>
-  <button onclick="showMatches()">Matches anzeigen</button>
-
-  <div id="matches"></div>
-
-  <!-- 👇 HIER ist dein Stickerbild ganz unten -->
-  <img src="images (1).png" class="bottom-img">
-
-</body>
-</html>
+        document.getElementById("suche").value = data
