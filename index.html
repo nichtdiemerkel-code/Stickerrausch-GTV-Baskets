@@ -20,13 +20,11 @@ body {
   border-radius: 16px;
 }
 
-/* 🔥 Logo oben */
 .logo {
   width: 90px;
   margin-bottom: 10px;
 }
 
-/* 🔥 Eingabefelder */
 input {
   width: 100%;
   padding: 12px;
@@ -35,7 +33,6 @@ input {
   border: 1px solid #ccc;
 }
 
-/* 🔥 Buttons */
 button {
   width: 100%;
   padding: 12px;
@@ -47,7 +44,6 @@ button {
   cursor: pointer;
 }
 
-/* 🔥 Match Box */
 .match {
   background: #e8f4ff;
   padding: 10px;
@@ -55,7 +51,6 @@ button {
   border-radius: 8px;
 }
 
-/* 🔥 Stickerbild unten */
 .sticker-img {
   width: 100%;
   max-width: 320px;
@@ -69,7 +64,6 @@ button {
 
 <div class="container">
 
-<!-- 🔥 LOGO OBEN -->
 <img src="images (1).png" class="logo">
 
 <h2>Sticker Tauschbörse</h2>
@@ -84,12 +78,10 @@ button {
 
 <div id="output"></div>
 
-<!-- 🔥 STICKERBILD UNTEN -->
 <img src="PXL_20260420_065327386.jpg" class="sticker-img">
 
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -148,30 +140,4 @@ window.matches = async function(){
     return;
   }
 
-  const meineDaten = meinDoc.data();
-  const meineSuche = meineDaten.suche || [];
-
-  const snapshot = await db.collection("users").get();
-
-  let html = "";
-
-  snapshot.forEach(doc => {
-    const user = doc.data();
-    const otherName = doc.id;
-
-    if(otherName === name) return;
-
-    const habe = user.habe || [];
-
-    if(habe.some(x => meineSuche.includes(x))){
-      html += `<div class="match"><b>${otherName}</b> hat deine Sticker</div>`;
-    }
-  });
-
-  document.getElementById("output").innerHTML =
-    html || "Keine Matches gefunden";
-};
-</script>
-
-</body>
-</html>
+  const
