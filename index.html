@@ -78,6 +78,7 @@ button {
 
 </div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -91,63 +92,87 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// sauber Zahlen erzeugen
+// Zahlen sauber parsen
 function parseListe(text){
-  return text.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+  return text
+    .split(",")
+    .map(x => parseInt(x.trim()))
+    .filter(x => !isNaN(x));
 }
 
-// speichern
+// SPEICHERN
 function speichern(){
   const name = document.getElementById("name").value.trim();
   const habe = parseListe(document.getElementById("habe").value);
   const suche = parseListe(document.getElementById("suche").value);
 
-  if(!name) return alert("Name fehlt");
+  if(!name) return alert("Name fehlt!");
 
   db.collection("users").doc(name).set({
+    name: name,
     habe: habe,
     suche: suche
   });
 
-  alert("Gespeichert");
+  alert("Gespeichert!");
 }
 
-// laden
+// LADEN
 async function laden(){
   const name = document.getElementById("name").value.trim();
   const doc = await db.collection("users").doc(name).get();
 
   if(doc.exists){
-    const d = doc.data();
-    document.getElementById("habe").value = (d.habe || []).join(", ");
-    document.getElementById("suche").value = (d.suche || []).join(", ");
+    const data = doc.data();
+    document.getElementById("habe").value = (data.habe || []).join(", ");
+    document.getElementById("suche").value = (data.suche || []).join(", ");
   } else {
-    alert("Keine Daten");
+    alert("Keine Daten gefunden!");
   }
 }
 
-// MATCHES (ultra simpel + sicher)
+// MATCHES (FINAL – nutzt Firebase-Daten, nicht Eingabefeld!)
 async function matches(){
-  const suche = parseListe(document.getElementById("suche").value);
+
+  const meinName = document.getElementById("name").value.trim();
+
+  if(!meinName){
+    alert("Bitte Name eingeben!");
+    return;
+  }
+
+  // 🔥 eigene Daten laden
+  const meinDoc = await db.collection("users").doc(meinName).get();
+
+  if(!meinDoc.exists){
+    alert("User nicht gefunden!");
+    return;
+  }
+
+  const meineDaten = meinDoc.data();
+  const meineSuche = meineDaten.suche || [];
 
   const snapshot = await db.collection("users").get();
+
   let html = "";
 
   snapshot.forEach(doc => {
-    const user = doc.data();
     const name = doc.id;
+    const user = doc.data();
+
+    if(name === meinName) return;
 
     const habe = user.habe || [];
 
-    for(let i = 0; i < suche.length; i++){
-      if(habe.includes(suche[i])){
-        html += `<div class="match">${name} hat deine Nummer ${suche[i]}</div>`;
-        break;
-      }
+    const match = habe.some(x => meineSuche.includes(x));
+
+    if(match){
+      html += `<div class="match"><b>${name}</b> hat deine Sticker</div>`;
     }
   });
 
-  document.getElementById("output").innerHTML = html || "Keine Matches";
+  document.getElementById("output").innerHTML =
+    html || "Keine Matches gefunden";
 }
 </script>
 
