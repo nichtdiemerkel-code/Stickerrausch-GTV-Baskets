@@ -20,22 +20,25 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  function parseList(str) {
+    return str.split(",").map(s => s.trim()).filter(Boolean).sort((a,b)=>a-b);
+  }
+
   window.speichern = async function () {
-    const name = document.getElementById("name").value;
-    const habe = document.getElementById("habe").value;
-    const suche = document.getElementById("suche").value;
+    const name = document.getElementById("name").value.trim();
+    const habe = parseList(document.getElementById("habe").value).join(",");
+    const suche = parseList(document.getElementById("suche").value).join(",");
 
     if (!name) return alert("Bitte Namen eingeben");
 
-    await addDoc(collection(db, "tausch"), {
-      name, habe, suche
-    });
-
+    await addDoc(collection(db, "tausch"), { name, habe, suche });
     alert("Gespeichert!");
   };
 
   window.laden = async function () {
-    const name = document.getElementById("name").value;
+    const name = document.getElementById("name").value.trim();
+    if (!name) return alert("Bitte Namen eingeben");
+
     const q = query(collection(db, "tausch"), where("name", "==", name));
     const snapshot = await getDocs(q);
 
@@ -47,99 +50,48 @@
   };
 
   window.matches = async function () {
-    const meineSuche = document.getElementById("suche").value.split(",");
+    const meineSuche = parseList(document.getElementById("suche").value);
     const snapshot = await getDocs(collection(db, "tausch"));
 
     let output = "";
 
     snapshot.forEach(doc => {
       const data = doc.data();
-      const habeListe = data.habe.split(",");
+      const habeListe = parseList(data.habe);
 
       meineSuche.forEach(num => {
-        if (habeListe.includes(num.trim())) {
+        if (habeListe.includes(num)) {
           output += `<div class="match">${data.name} hat: ${num}</div>`;
         }
       });
     });
 
-    document.getElementById("output").innerHTML = output;
+    document.getElementById("output").innerHTML = output || "Keine Matches gefunden";
   };
 </script>
 
 <style>
 body {
-  font-family: Arial;
-  text-align: center;
-  background: #f5f5f5;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
   padding: 20px;
+  text-align: center;
 }
 
-.logo-top {
-  width: 80px;
+.container {
+  max-width: 420px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.logo {
+  width: 70px;
   margin-bottom: 10px;
 }
 
 h2 {
-  margin-bottom: 5px;
-}
-
-.sub {
-  color: gray;
-  margin-bottom: 20px;
-}
-
-input {
-  width: 90%;
-  max-width: 400px;
-  padding: 12px;
-  margin: 8px 0;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-}
-
-input:focus {
-  border-color: #e30613;
-  outline: none;
-}
-
-button {
-  width: 90%;
-  max-width: 400px;
-  padding: 12px;
-  margin: 6px 0;
-  border: none;
-  border-radius: 8px;
-  background: #ddd;
-  font-size: 16px;
-}
-
-.match {
-  background: #e0f0ff;
-  margin: 5px;
-  padding: 10px;
-  border-radius: 6px;
-}
-
-.sticker-img {
-  width: 250px;
-  margin-top: 20px;
-  border-radius: 10px;
-}
-</style>
-</head>
-
-<body>
-
-<img src="images (1).png" class="logo-top">
-
-<h2>Sticker Tauschbörse</h2>
-<div class="sub">GTV Baskets</div>
-
-<input id="name" placeholder="Vorname + Anfangsbuchstabe (z.B. Anna M)">
-<input id="habe" placeholder="Habe (z.B. 1,2,3)">
-<input id="suche" placeholder="Suche (z.B. 5,8,10)">
-
-<button onclick="speichern()">Speichern</button>
-<button
+  margin: 5
