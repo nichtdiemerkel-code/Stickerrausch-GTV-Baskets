@@ -11,7 +11,6 @@
 body {
   font-family: Arial;
   background: #f4f6f8;
-  margin: 0;
   padding: 20px;
   text-align: center;
 }
@@ -22,11 +21,6 @@ body {
   background: white;
   padding: 20px;
   border-radius: 16px;
-}
-
-.logo {
-  width: 90px;
-  margin-bottom: 10px;
 }
 
 input {
@@ -45,7 +39,6 @@ button {
   border: none;
   background: #e30613;
   color: white;
-  cursor: pointer;
 }
 
 .match {
@@ -54,13 +47,6 @@ button {
   margin-top: 8px;
   border-radius: 8px;
 }
-
-.sticker-img {
-  width: 100%;
-  max-width: 320px;
-  margin-top: 20px;
-  border-radius: 12px;
-}
 </style>
 </head>
 
@@ -68,13 +54,11 @@ button {
 
 <div class="container">
 
-<img src="images (1).png" class="logo">
-
 <h2>Sticker Tauschbörse</h2>
 
-<input id="name" placeholder="Name (z. B. AnnaM)">
-<input id="habe" placeholder="Habe (z. B. 1,5,23)">
-<input id="suche" placeholder="Suche (z. B. 8,12,44)">
+<input id="name" placeholder="Name">
+<input id="habe" placeholder="Habe (1,5,23)">
+<input id="suche" placeholder="Suche (8,12,44)">
 
 <button onclick="speichern()">Speichern</button>
 <button onclick="laden()">Meine Daten laden</button>
@@ -82,97 +66,58 @@ button {
 
 <div id="output"></div>
 
-<img src="PXL_20260420_065327386.jpg" class="sticker-img">
-
 </div>
 
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
   authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
-  projectId: "gtv-baskets-stickertausch",
-  storageBucket: "gtv-baskets-stickertausch.firebasestorage.app",
-  messagingSenderId: "533155128539",
-  appId: "1:533155128539:web:c309efb7827301617a98fe"
+  projectId: "gtv-baskets-stickertausch"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-function parseListe(text){
-  return text.split(",")
-    .map(x => parseInt(x.trim()))
-    .filter(x => !isNaN(x));
+function parse(text){
+  return text.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x));
 }
 
-function speichern(){
+async function speichern(){
   const name = document.getElementById("name").value.trim();
-  const habe = parseListe(document.getElementById("habe").value);
-  const suche = parseListe(document.getElementById("suche").value);
+  const habe = parse(document.getElementById("habe").value);
+  const suche = parse(document.getElementById("suche").value);
 
-  if(!name) return alert("Name fehlt!");
-
-  db.collection("users").doc(name).set({
+  await db.collection("users").doc(name).set({
     name,
     habe,
     suche
   });
 
-  alert("Gespeichert!");
+  alert("Gespeichert");
 }
 
 async function laden(){
   const name = document.getElementById("name").value.trim();
 
-  const docSnap = await db.collection("users").doc(name).get();
+  const doc = await db.collection("users").doc(name).get();
 
-  if(docSnap.exists){
-    const data = docSnap.data();
+  if(doc.exists){
+    const data = doc.data();
     document.getElementById("habe").value = (data.habe || []).join(", ");
     document.getElementById("suche").value = (data.suche || []).join(", ");
   } else {
-    alert("Keine Daten gefunden!");
+    alert("Keine Daten gefunden");
   }
 }
 
 async function matches(){
-  const myName = document.getElementById("name").value.trim();
+  const name = document.getElementById("name").value.trim();
 
-  if(!myName) return alert("Name eingeben!");
-
-  const myDoc = await db.collection("users").doc(myName).get();
+  const myDoc = await db.collection("users").doc(name).get();
 
   if(!myDoc.exists){
-    alert("User nicht gefunden!");
+    alert("User nicht gefunden");
     return;
   }
 
-  const meineDaten = myDoc.data();
-  const meineSuche = meineDaten.suche || [];
-
-  const snapshot = await db.collection("users").get();
-
-  let html = "";
-
-  snapshot.forEach(doc => {
-    const user = doc.data();
-    const otherName = doc.id;
-
-    if(otherName === myName) return;
-
-    const habe = user.habe || [];
-
-    const gemeinsame = habe.filter(x => meineSuche.includes(x));
-
-    if(gemeinsame.length > 0){
-      html += `<div class="match"><b>${otherName}</b> hat deine Sticker: ${gemeinsame.join(", ")}</div>`;
-    }
-  });
-
-  document.getElementById("output").innerHTML =
-    html || "Keine Matches gefunden";
-}
-</script>
-
-</body>
-</html>
+  const
