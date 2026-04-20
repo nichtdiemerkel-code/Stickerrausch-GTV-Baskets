@@ -2,95 +2,90 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Sticker Tauschbörse</title>
+<title>Sticker Tausch</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <style>
-body { font-family: Arial; padding: 20px; max-width: 500px; margin: auto; }
-input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; }
-button { background: #007bff; color: white; border: none; border-radius: 5px; }
-.match { background: #e9f5ff; padding: 8px; margin: 6px 0; border-radius: 5px; }
+body { font-family: Arial; max-width: 500px; margin: auto; padding: 20px; }
+input, button { width: 100%; padding: 10px; margin: 5px 0; }
+.match { background: #e0f0ff; padding: 5px; margin: 5px 0; }
 </style>
+
 </head>
 <body>
 
 <h2>Sticker Tauschbörse</h2>
 
 <input id="name" placeholder="Dein Name">
-<input id="habe" placeholder="Ich habe (z.B. 1,2,3)">
-<input id="suche" placeholder="Ich suche (z.B. 4,5,6)">
+<input id="habe" placeholder="Habe (z.B. 1,2,3)">
+<input id="suche" placeholder="Suche (z.B. 4,5,6)">
 
-<button onclick="speichern()">Eintragen</button>
+<button onclick="speichern()">Speichern</button>
 <button onclick="anzeigen()">Matches anzeigen</button>
 
 <div id="output"></div>
 
 <script>
 
-const BIN_ID = "69e539d3aaba882197179c9e";
-const API_KEY = "$2a$10$HdFJ0LYvpk4dzcUyaf99HuRQV79zqoxn88z9jbfTjPrNcYKCiXHNq";
+// 🔥 HIER DEINE FIREBASE DATEN EINTRAGEN
+const firebaseConfig = {
+  apiKey: "HIER",
+  authDomain: "HIER",
+  databaseURL: "HIER",
+  projectId: "HIER",
+  storageBucket: "HIER",
+  messagingSenderId: "HIER",
+  appId: "HIER"
+};
 
-function liste(text) {
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function parseListe(text) {
   return text.split(",")
     .map(x => parseInt(x.trim()))
-    .filter(x => !isNaN(x));
+    .filter(x => !isNaN(x))
+    .sort((a, b) => a - b);
 }
 
-async function ladeAlle() {
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
+function speichern() {
+  let name = document.getElementById("name").value;
+  let habe = parseListe(document.getElementById("habe").value);
+  let suche = parseListe(document.getElementById("suche").value);
 
-  let data = await res.json();
-  return data.record.users || [];
-}
+  if (!name) return alert("Name fehlt!");
 
-async function speichern() {
-  let name = document.getElementById("name").value.trim();
-  let habe = liste(document.getElementById("habe").value);
-  let suche = liste(document.getElementById("suche").value);
-
-  let users = await ladeAlle();
-
-  let idx = users.findIndex(u => u.name === name);
-
-  if (idx !== -1) {
-    users[idx] = { name, habe, suche };
-  } else {
-    users.push({ name, habe, suche });
-  }
-
-  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Master-Key": API_KEY
-    },
-    body: JSON.stringify({ users })
+  db.ref("users/" + name).set({
+    habe: habe,
+    suche: suche
   });
 
   alert("Gespeichert!");
 }
 
-async function anzeigen() {
-  let meinName = document.getElementById("name").value.trim();
-  let meineSuche = liste(document.getElementById("suche").value);
+function anzeigen() {
+  let meineSuche = parseListe(document.getElementById("suche").value);
+  let meinName = document.getElementById("name").value;
 
-  let users = await ladeAlle();
+  db.ref("users").once("value", snapshot => {
+    let users = snapshot.val();
+    let html = "";
 
-  let html = "";
+    for (let name in users) {
+      if (name === meinName) continue;
 
-  users.forEach(u => {
-    if (u.name === meinName) return;
+      let user = users[name];
+      let matches = meineSuche.filter(n => user.habe.includes(n));
 
-    let treffer = meineSuche.filter(n => u.habe.includes(n));
-
-    if (treffer.length > 0) {
-      html += `<div class="match"><b>${u.name}</b> hat: ${treffer.join(", ")}</div>`;
+      if (matches.length > 0) {
+        html += `<div class="match"><b>${name}</b> hat: ${matches.join(", ")}</div>`;
+      }
     }
-  });
 
-  document.getElementById("output").innerHTML =
-    html || "Keine Matches gefunden";
+    document.getElementById("output").innerHTML = html || "Keine Matches gefunden.";
+  });
 }
 
 </script>
