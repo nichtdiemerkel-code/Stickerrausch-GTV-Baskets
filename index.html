@@ -1,65 +1,177 @@
-import { useState } from "react";
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Sticker Tauschbörse</title>
 
-export default function StickerApp() {
-  const [input, setInput] = useState("");
-  const [myStickers, setMyStickers] = useState([]);
-
-  // Beispiel-Daten (andere Nutzer)
-  const users = [
-    { name: "Tom", stickers: ["1", "12", "45", "82"] },
-    { name: "Lisa", stickers: ["2", "23", "64"] },
-    { name: "TestA", stickers: ["10", "20", "82"] }
-  ];
-
-  // 👉 Speichern
-  const handleSave = () => {
-    const cleaned = input
-      .split(",")
-      .map(n => n.trim())
-      .filter(n => n !== "");
-
-    setMyStickers(cleaned);
-  };
-
-  return (
-    <div style={{ padding: 20 }}>
-      <h2>Sticker eingeben</h2>
-
-      <textarea
-        rows={4}
-        cols={40}
-        placeholder="z.B. 1, 11, 12, 20"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-
-      <br /><br />
-
-      <button onClick={handleSave}>Speichern</button>
-
-      <h3>Deine Sticker:</h3>
-      <div>
-        {myStickers.length > 0
-          ? myStickers.join(", ")
-          : "Keine eingegeben"}
-      </div>
-
-      <h3>Matches:</h3>
-
-      {users.map(user => {
-        const matches = user.stickers.filter(sticker =>
-          myStickers.includes(sticker)
-        );
-
-        if (matches.length === 0) return null;
-
-        return (
-          <div key={user.name} style={{ marginBottom: 10 }}>
-            <strong>{user.name}</strong> hat deine Sticker:{" "}
-            {matches.join(", ")}
-          </div>
-        );
-      })}
-    </div>
-  );
+<style>
+body {
+  font-family: Arial;
+  background: #f4f6f8;
+  padding: 20px;
+  text-align: center;
 }
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+/* 🔥 Logo oben */
+.logo {
+  width: 90px;
+  margin-bottom: 10px;
+}
+
+/* 🔥 Eingabefelder */
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+/* 🔥 Buttons */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: none;
+  background: #e30613;
+  color: white;
+  cursor: pointer;
+}
+
+/* 🔥 Match Box */
+.match {
+  background: #e8f4ff;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+
+/* 🔥 Stickerbild unten */
+.sticker-img {
+  width: 100%;
+  max-width: 320px;
+  margin-top: 20px;
+  border-radius: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- 🔥 LOGO OBEN -->
+<img src="images (1).png" class="logo">
+
+<h2>Sticker Tauschbörse</h2>
+
+<input id="name" placeholder="Name (z.B. AnnaM)">
+<input id="habe" placeholder="Habe (z.B. 1,5,23)">
+<input id="suche" placeholder="Suche (z.B. 8,12,44)">
+
+<button onclick="window.speichern()">Speichern</button>
+<button onclick="window.laden()">Meine Daten laden</button>
+<button onclick="window.matches()">Matches anzeigen</button>
+
+<div id="output"></div>
+
+<!-- 🔥 STICKERBILD UNTEN -->
+<img src="PXL_20260420_065327386.jpg" class="sticker-img">
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
+  authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
+  projectId: "gtv-baskets-stickertausch"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function parseListe(text){
+  return text.split(",").map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+}
+
+window.speichern = function(){
+  const name = document.getElementById("name").value.trim();
+  const habe = parseListe(document.getElementById("habe").value);
+  const suche = parseListe(document.getElementById("suche").value);
+
+  if(!name) return alert("Name fehlt!");
+
+  db.collection("users").doc(name).set({
+    name: name,
+    habe: habe,
+    suche: suche
+  });
+
+  alert("Gespeichert!");
+};
+
+window.laden = async function(){
+  const name = document.getElementById("name").value.trim();
+  const doc = await db.collection("users").doc(name).get();
+
+  if(doc.exists){
+    const data = doc.data();
+    document.getElementById("habe").value = (data.habe || []).join(", ");
+    document.getElementById("suche").value = (data.suche || []).join(", ");
+  } else {
+    alert("Keine Daten gefunden!");
+  }
+};
+
+window.matches = async function(){
+  const name = document.getElementById("name").value.trim();
+
+  if(!name) return alert("Name eingeben!");
+
+  const meinDoc = await db.collection("users").doc(name).get();
+
+  if(!meinDoc.exists){
+    alert("User nicht gefunden!");
+    return;
+  }
+
+  const meineDaten = meinDoc.data();
+  const meineSuche = meineDaten.suche || [];
+
+  const snapshot = await db.collection("users").get();
+
+  let html = "";
+
+  snapshot.forEach(doc => {
+    const user = doc.data();
+    const otherName = doc.id;
+
+    if(otherName === name) return;
+
+    const habe = user.habe || [];
+
+    if(habe.some(x => meineSuche.includes(x))){
+      html += `<div class="match"><b>${otherName}</b> hat deine Sticker</div>`;
+    }
+  });
+
+  document.getElementById("output").innerHTML =
+    html || "Keine Matches gefunden";
+};
+</script>
+
+</body>
+</html>
