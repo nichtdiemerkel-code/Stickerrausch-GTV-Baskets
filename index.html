@@ -98,7 +98,7 @@ const db = getFirestore(app);
 
 function parseListe(text) {
   return text.split(",")
-    .map(x => parseInt(x.trim()))
+    .map(x => Number(x.trim()))
     .filter(x => !isNaN(x))
     .sort((a, b) => a - b);
 }
@@ -110,10 +110,7 @@ window.speichern = async function() {
 
   if (!name) return alert("Name fehlt!");
 
-  await setDoc(doc(db, "users", name), {
-    habe,
-    suche
-  });
+  await setDoc(doc(db, "users", name), { habe, suche });
 
   alert("Gespeichert!");
 };
@@ -125,8 +122,8 @@ window.laden = async function() {
 
   if (docSnap.exists()) {
     const data = docSnap.data();
-    document.getElementById("habe").value = data.habe.join(", ");
-    document.getElementById("suche").value = data.suche.join(", ");
+    document.getElementById("habe").value = (data.habe || []).join(", ");
+    document.getElementById("suche").value = (data.suche || []).join(", ");
   } else {
     alert("Nicht gefunden!");
   }
@@ -145,10 +142,12 @@ window.matches = async function() {
 
     if (name === meinName) return;
 
-    const matches = meineSuche.filter(s => user.habe.includes(s));
+    const habeListe = (user.habe || []).map(Number);
 
-    if (matches.length > 0) {
-      html += `<div class="match"><b>${name}</b> hat: ${matches.join(", ")}</div>`;
+    const gefunden = meineSuche.filter(s => habeListe.includes(Number(s)));
+
+    if (gefunden.length > 0) {
+      html += `<div class="match"><b>${name}</b> hat: ${gefunden.join(", ")}</div>`;
     }
   });
 
