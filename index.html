@@ -39,16 +39,11 @@
       width: 120px;
       border-radius: 10px;
     }
-
-    .subtitle {
-      color: gray;
-      font-size: 14px;
-    }
   </style>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
@@ -71,18 +66,41 @@
         .sort((a, b) => a - b);
     }
 
+    function safeName(name) {
+      return name.replace(/[^a-zA-Z0-9]/g, "_");
+    }
+
     window.saveData = function () {
       const name = document.getElementById("name").value;
+      const key = safeName(name);
+
       const habe = sortiereListe(document.getElementById("habe").value);
       const suche = sortiereListe(document.getElementById("suche").value);
 
-      push(ref(db, "users"), {
+      set(ref(db, "users/" + key), {
         name,
         habe,
         suche
       });
 
       alert("Gespeichert!");
+    };
+
+    window.loadMyData = function () {
+      const name = document.getElementById("name").value;
+      const key = safeName(name);
+
+      onValue(ref(db, "users/" + key), (snapshot) => {
+        const data = snapshot.val();
+
+        if (!data) {
+          alert("Keine Daten gefunden!");
+          return;
+        }
+
+        document.getElementById("habe").value = data.habe.join(",");
+        document.getElementById("suche").value = data.suche.join(",");
+      }, { onlyOnce: true });
     };
 
     window.showMatches = function () {
@@ -112,26 +130,6 @@
         });
       }, { onlyOnce: true });
     };
-
-    window.loadMyData = function () {
-      const name = document.getElementById("name").value;
-
-      onValue(ref(db, "users"), (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-
-        const users = Object.values(data);
-        const user = users.find(u => u.name === name);
-
-        if (!user) {
-          alert("Keine Daten gefunden!");
-          return;
-        }
-
-        document.getElementById("habe").value = user.habe.join(",");
-        document.getElementById("suche").value = user.suche.join(",");
-      }, { onlyOnce: true });
-    };
   </script>
 </head>
 
@@ -142,7 +140,6 @@
     <br>
     <img src="PXL_20260420_065327386.jpg" class="logo-big">
     <h2>Sticker Tauschbörse</h2>
-    <div class="subtitle">GTV Baskets</div>
   </div>
 
   <input id="name" placeholder="Dein Name">
