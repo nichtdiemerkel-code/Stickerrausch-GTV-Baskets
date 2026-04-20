@@ -23,7 +23,8 @@ body {
 }
 
 .logo {
-  width: 70px;
+  width: 80px;
+  margin-bottom: 10px;
 }
 
 input {
@@ -42,6 +43,7 @@ button {
   border: none;
   background: #e30613;
   color: white;
+  font-weight: bold;
 }
 
 .match {
@@ -54,6 +56,7 @@ button {
 .sticker-img {
   width: 100%;
   margin-top: 20px;
+  border-radius: 12px;
 }
 </style>
 </head>
@@ -62,6 +65,7 @@ button {
 
 <div class="container">
 
+<!-- LOGO OBEN -->
 <img src="images (1).png" class="logo">
 
 <h2>Sticker Tauschbörse</h2>
@@ -76,6 +80,7 @@ button {
 
 <div id="output"></div>
 
+<!-- STICKERBILD UNTEN -->
 <img src="PXL_20260420_065327386.jpg" class="sticker-img">
 
 </div>
@@ -121,6 +126,8 @@ window.laden = async function() {
     const data = docSnap.data();
     document.getElementById("habe").value = (data.habe || []).join(", ");
     document.getElementById("suche").value = (data.suche || []).join(", ");
+  } else {
+    alert("Keine Daten gefunden!");
   }
 };
 
@@ -135,4 +142,18 @@ window.matches = async function() {
     const user = docSnap.data();
     const name = docSnap.id;
 
-    if
+    if (name === meinName) return;
+
+    const hatMatch = (user.habe || []).some(x => meineSuche.includes(x));
+
+    if (hatMatch) {
+      html += `<div class="match"><b>${name}</b> hat deine Sticker: ${user.habe.join(", ")}</div>`;
+    }
+  });
+
+  document.getElementById("output").innerHTML = html || "Keine Matches gefunden";
+};
+</script>
+
+</body>
+</html>
