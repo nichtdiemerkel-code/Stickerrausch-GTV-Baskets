@@ -1,104 +1,129 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Sticker Tauschbörse</title>
+<meta charset="UTF-8">
+<title>Sticker Tauschbörse</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      max-width: 500px;
-      margin: auto;
-      padding: 10px;
-      text-align: center;
-    }
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-    }
+  const firebaseConfig = {
+    apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
+    authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
+    projectId: "gtv-baskets-stickertausch",
+    storageBucket: "gtv-baskets-stickertausch.firebasestorage.app",
+    messagingSenderId: "533155128539",
+    appId: "1:533155128539:web:c309efb7827301617a98fe"
+  };
 
-    .match {
-      background: #e0f0ff;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 5px;
-    }
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    .logo-big {
-      width: 140px;
-      margin-bottom: 10px;
-    }
+  window.speichern = async function () {
+    const name = document.getElementById("name").value;
+    const habe = document.getElementById("habe").value;
+    const suche = document.getElementById("suche").value;
 
-    .bottom-img {
-      width: 120px;
-      margin-top: 40px;
-    }
+    await addDoc(collection(db, "tausche"), {
+      name,
+      habe,
+      suche
+    });
 
-    .subtitle {
-      color: gray;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-  </style>
+    alert("Gespeichert!");
+  };
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
+  window.matchesAnzeigen = async function () {
+    const querySnapshot = await getDocs(collection(db, "tausche"));
+    let daten = [];
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXjooJ3PldsrB8DHtzdlbbZXuwr8MC-qg",
-      authDomain: "gtv-baskets-stickertausch.firebaseapp.com",
-      projectId: "gtv-baskets-stickertausch",
-      storageBucket: "gtv-baskets-stickertausch.firebasestorage.app",
-      messagingSenderId: "533155128539",
-      appId: "1:533155128539:web:c309efb7827301617a98fe",
-      databaseURL: "https://gtv-baskets-stickertausch-default-rtdb.firebaseio.com/"
-    };
+    querySnapshot.forEach((doc) => {
+      daten.push(doc.data());
+    });
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    let output = "";
 
-    function sortiereListe(text) {
-      return text
-        .split(",")
-        .map(x => parseInt(x.trim()))
-        .filter(x => !isNaN(x))
-        .sort((a, b) => a - b);
-    }
+    daten.forEach(a => {
+      daten.forEach(b => {
+        if (a !== b) {
+          let habeA = a.habe.split(",").map(x => x.trim());
+          let sucheA = a.suche.split(",").map(x => x.trim());
 
-    function safeName(name) {
-      return name.replace(/[^a-zA-Z0-9]/g, "_");
-    }
+          habeA.forEach(num => {
+            if (b.suche.includes(num)) {
+              output += `<div class="match">${a.name} hat ${num} für ${b.name}</div>`;
+            }
+          });
 
-    window.saveData = function () {
-      const name = document.getElementById("name").value;
-      const key = safeName(name);
-
-      const habe = sortiereListe(document.getElementById("habe").value);
-      const suche = sortiereListe(document.getElementById("suche").value);
-
-      set(ref(db, "users/" + key), {
-        name,
-        habe,
-        suche
-      });
-
-      alert("Gespeichert!");
-    };
-
-    window.loadMyData = function () {
-      const name = document.getElementById("name").value;
-      const key = safeName(name);
-
-      onValue(ref(db, "users/" + key), (snapshot) => {
-        const data = snapshot.val();
-
-        if (!data) {
-          alert("Keine Daten gefunden!");
-          return;
+          sucheA.forEach(num => {
+            if (b.habe.includes(num)) {
+              output += `<div class="match">${a.name} sucht ${num} von ${b.name}</div>`;
+            }
+          });
         }
+      });
+    });
 
-        document.getElementById("habe").value = data.habe.join(",");
-        document.getElementById("suche").value = data
+    document.getElementById("matches").innerHTML = output || "Keine Matches gefunden";
+  };
+</script>
+
+<style>
+body {
+  font-family: Arial;
+  max-width: 500px;
+  margin: auto;
+  text-align: center;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+.match {
+  background: #e0f0ff;
+  padding: 5px;
+  margin: 5px 0;
+}
+
+/* 🔴 Logo oben (klein lassen) */
+.logo {
+  width: 80px;
+  margin: 10px auto;
+}
+
+/* 🔴 Stickerbild unten (größer!) */
+.stickerbild {
+  width: 250px;   /* HIER größer gemacht */
+  max-width: 100%;
+  margin-top: 30px;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- 🔥 GTV LOGO OBEN -->
+<img src="images (1).png" class="logo">
+
+<h2>Sticker Tauschbörse</h2>
+<p>GTV Baskets</p>
+
+<input id="name" placeholder="Vorname + Anfangsbuchstabe (z.B. Anna M)">
+<input id="habe" placeholder="Habe (z.B. 1,2,3)">
+<input id="suche" placeholder="Suche (z.B. 5,8,10)">
+
+<button onclick="speichern()">Speichern</button>
+<button onclick="matchesAnzeigen()">Matches anzeigen</button>
+
+<div id="matches"></div>
+
+<!-- 🔥 STICKERBILD UNTEN (JETZT GRÖSSER) -->
+<img src="PXL_20260420_065327386.jpg" class="stickerbild">
+
+</body>
+</html>
